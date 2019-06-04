@@ -7,6 +7,7 @@ from task import Task
 from task_queue import TaskQueue
 from channels import *
 import applications
+from rl.utilities import *
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class ServerNode(Node):
         self.computation_capability = computation_capability  # clocks/tick
         self.number_of_applications = 0
         self.queue_list = {} # 어플마다 각자의 큐가 필요함.
+        self.arrival_size_buffer = Lyapunov_buffer(max_size=100, initial_storage=None)
 
     # default는 오프로드할 상위 링크를 연결하는 것
     def add_link(self, link_to, channel, type=0):
@@ -66,7 +68,7 @@ class ServerNode(Node):
             else:
                 my_task_queue = self.queue_list[app_type]
                 if my_task_queue.length:
-                    cpu_allocs[app_type], _ =my_task_queue.served(cpu_allocs[app_type]*self.computation_capability, type=1)
+                    cpu_allocs[app_type], _ = my_task_queue.served(cpu_allocs[app_type]*self.computation_capability, type=1)
                 else:
                     cpu_allocs[app_type]=0
         # return alpha, served_bits, my_task_queue
@@ -75,7 +77,7 @@ class ServerNode(Node):
 
     def _probe(self, bits_to_be_arrived, id_to_offload):
         node_to_offload = self.links_to_higher[id_to_offload]['node']
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         for app_type, bits in bits_to_be_arrived.items():
             node_app_queue = node_to_offload.queue_list[app_type]
             if node_app_queue.max_length < node_app_queue.length + bits:
@@ -91,13 +93,17 @@ class ServerNode(Node):
         return dict(zip(ids_to_offload, amount_to_offload))
     '''
 
+    def get_channel_rate(self, id_to_offload):
+        import pdb; pdb.set_trace()
+        return get_channel_info(self.links_to_higher[id_to_offload]['channel'], 'rate')
+
     # 모든 application에 대한 액션 alpha, 실제 활용한 총 cpu 비율 return
     def offload_tasks(self, beta, id_to_offload):
         # 문제가 좀 있음.. channel.py에 channel을 좀 손봐야 함
-        channel_rate = get_channel_info(self.links_to_higher[id_to_offload]['channel'], 'rate')
+        channel_rate = self.get_channel_rate(id_to_offload)
         app_type_list = list(self.queue_list.keys())
         tx_allocs = dict(zip(app_type_list, np.array(beta)*channel_rate))
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         tx_allocs = self._probe(tx_allocs, id_to_offload)
         # import pdb; pdb.set_trace()
         task_to_be_offloaded = {}
@@ -122,10 +128,11 @@ class ServerNode(Node):
         '''
 
     # _probe에서 받을 수 있는 것만 받기때문에 arrived에서 또 넘치는 걸 체크할 필요 없네.
-    def offloaded_tasks(self, tasks):
+    def offloaded_tasks(self, tasks, arrival_timestamp):
         for task_id, task_ob in tasks.items():
             task_ob.client_index = task_ob.server_index
             task_ob.server_index = self.get_uuid()
+            task_ob.set_arrival_time = arrival_timestamp
             if not self.queue_list[task_ob.application_type].arrived(task_ob):
                 print("queue exploded queue exploded i'm 'offloaded_tasks'")
             # task가 받아지지 않았을 때 role back 해야 하는데 ㅠㅠ
@@ -133,20 +140,24 @@ class ServerNode(Node):
 
     # 사실 하위 device에서 offload 받은 task를 전해 받아야 함.
     # 일단 simulation을 위해 그냥 만들어 놓음. 하..
-    def random_task_generation(self, task_rate):
+    def random_task_generation(self, task_rate, arrival_timestamp, *app_types):
         app_type_list = applications.app_type_list()
         app_type_pop = applications.app_type_pop()
+        this_app_type_list = list(self.queue_list.keys())
         random_id = uuid.uuid4()
         # queue_list = {}
         # task_type = np.random.choice(app_type_list, app_type_pop)
+        arrival_size = np.zeros(8)
         for app_type, population in app_type_pop:
-            if app_type >=7:
+            if app_type in this_app_type_list:
                 data_size = np.random.poisson(task_rate*population)
-                t = Task(random_id.hex, self.get_uuid(), app_type, data_size)
+                t = Task(app_type, data_size, client_index = random_id.hex, server_index = self.get_uuid(), arrival_timestamp=arrival_timestamp)
                 self.queue_list[app_type].arrived(t)
+                arrival_size[app_type-1]= data_size
             else:
                 pass
-        return
+        self.arrival_size_buffer.add(arrival_size)
+        return arrival_size
 
 
     def print_me(self):
@@ -163,6 +174,10 @@ class ServerNode(Node):
                     index, task.computation_over, task.data_size,
                     task.client_index)
     #
+    def estimate_arrival_rate(self, interval=10):
+        buffer = np.array(self.arrival_size_buffer.get_buffer())
+        return np.mean(buffer, axis=0)
+
     def get_status(self):
         # TODO : list to JSON?
         # val = {
@@ -174,4 +189,12 @@ class ServerNode(Node):
         #     'computation_capability': self.computation_capability
         # }
 
-        return self.queue_list
+        # 앱 개수만큼 리스트
+        queue_lengths = np.zeros(8)
+        # arrival_rates = np.zeros(8)
+        for _, queue in self.queue_list.items():
+            queue_lengths[queue.app_type-1] = queue.length
+            # arrival_rates[queue.app_type-1] = queue.estimate_arrival_rate()
+        # 아 채널 스테이트도 받아와야 하는데 ㅠㅠ 일단 메인에서 받는다
+
+        return list(queue_lengths) + [self.computation_capability]

@@ -1,8 +1,9 @@
 import uuid
 import copy
+import applications
 
 class Task(object):
-    def __init__(self, application_type, data_size, client_index = None, server_index = None ):
+    def __init__(self, application_type, data_size, client_index = None, server_index = None, arrival_timestamp=None):
         self.client_index = client_index # 이게 오프로드된 작업이라면 요청한 client가 있지
         self.server_index = server_index # 이게 여기서 오프로드시켰다면 오프로드 시킨 server가 있지.
         self.application_type = application_type
@@ -14,7 +15,7 @@ class Task(object):
         self.parent_uuid = None
         self.child_uuid = None
         # arrival rate 분석할 때 최근 몇 초 안에 도착한 arrival을 기록해야 함.
-        self.arrival_timestamp = None
+        self.arrival_timestamp = arrival_timestamp
         self.start_timestamp = None # 혹시 몰라서. task별 waiting time 필요할 수도 있음.
         self.end_timestamp = None # 마찬가지.
 
@@ -28,6 +29,15 @@ class Task(object):
         new_task.data_size = offload_data_bits
         self.data_size = self.data_size-offload_data_bits
         return new_task
+
+    def get_workload(self):
+        return applications.app_info[self.application_type]['workload']
+
+    def get_data_size(self):
+        return self.data_size
+
+    def set_arrival_time(self, arrival_timestamp):
+        self.arrival_timestamp = arrival_timestamp
 
     def is_client_index(self):
         return bool(self.client_index)

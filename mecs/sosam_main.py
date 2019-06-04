@@ -43,7 +43,7 @@ def main():
     cloud_policy = [0.5, 0.5]
 
     for t in range(200001):
-        edge_server.random_task_generation(task_rate)
+        edge_server.random_task_generation(task_rate, t)
         print(edge_server.queue_list[8].tasks, edge_server.queue_list[7].tasks)
         print(cloud_server.queue_list[8].tasks, cloud_server.queue_list[7].tasks)
 
@@ -63,7 +63,7 @@ def main():
 
         used_edge_cpu = edge_server.do_tasks(alpha)
         used_tx, task_to_be_offloaded = edge_server.offload_tasks(beta, cloud_server.get_uuid())
-        cloud_server.offloaded_tasks(task_to_be_offloaded)
+        cloud_server.offloaded_tasks(task_to_be_offloaded, t)
         used_cloud_cpu = cloud_server.do_tasks(cloud_policy)
         # used_tx, task_to_be_offloaded = edge_server.do_and_offload( alpha, beta, cloud_server.get_uuid() )
         print("used_edge_cpu {}, used_tx {}, used_cloud_cpu {}".format(used_edge_cpu, used_tx, used_cloud_cpu))

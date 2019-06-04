@@ -1,6 +1,7 @@
 import uuid
 import logging
 from abc import abstractmethod, ABCMeta
+import collections
 import copy
 import numpy as np
 import applications
@@ -14,7 +15,7 @@ class TaskQueue(object):
     def __init__(self, app_type):
         self.uuid = uuid.uuid4()
         self.max_length = 9999
-        self.tasks = {}
+        self.tasks = collections.OrderedDict()
         self.length = 0
         self.app_type = app_type
 
@@ -40,6 +41,7 @@ class TaskQueue(object):
     def arrived(self, task):
         task_id = task.get_uuid()
         task_length = task.data_size
+        # import pdb; pdb.set_trace()
         new_length = self.length + task_length
         # import pdb; pdb.set_trace()
         if new_length <= self.max_length:
@@ -98,6 +100,15 @@ class TaskQueue(object):
                     used_resource = resource - to_be_offloaded
             self.remove_multiple_tasks(task_to_remove)
             return used_resource, offloaded_tasks
+
+    def past_queue_length(self, t, interval=1):
+        result = 0
+        for task_id, task_ob in reversed(self.tasks.items()):
+            if task_ob.arrival_timestamp > t - interval:
+                result += task_ob.data_size
+            else:
+                break
+        return self.length - result
 
     @abstractmethod
     def print_me(self):
