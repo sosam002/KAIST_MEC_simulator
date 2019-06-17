@@ -150,10 +150,14 @@ class ServerNode(Node):
         arrival_size = np.zeros(8)
         for app_type, population in app_type_pop:
             if app_type in this_app_type_list:
-                data_size = np.random.poisson(task_rate*population)
-                t = Task(app_type, data_size, client_index = random_id.hex, server_index = self.get_uuid(), arrival_timestamp=arrival_timestamp)
-                self.queue_list[app_type].arrived(t)
-                arrival_size[app_type-1]= data_size
+                data_size = np.random.poisson(task_rate*population)*applications.arrival_bits(app_type)
+                if data_size >0:
+                    t = Task(app_type, data_size, client_index = random_id.hex, server_index = self.get_uuid(), arrival_timestamp=arrival_timestamp)
+                    self.queue_list[app_type].arrived(t)
+                    arrival_size[app_type-1]= data_size
+                    print("arrival of app_type{} : {}".format(app_type, data_size))
+                else:
+                    print("no arrival of app_type{} occured")
             else:
                 pass
         self.arrival_size_buffer.add(arrival_size)

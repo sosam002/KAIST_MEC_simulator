@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 
 class TaskQueue(object):
 
-    def __init__(self, app_type):
+    def __init__(self, app_type, max_length=9999999):
         self.uuid = uuid.uuid4()
-        self.max_length = 9999
+        self.max_length = max_length
         self.tasks = collections.OrderedDict()
         self.length = 0
         self.app_type = app_type
@@ -47,12 +47,12 @@ class TaskQueue(object):
         if new_length <= self.max_length:
             self.tasks[task_id] = task
             self.length = new_length
-            print('task arrival success')
+            print('task arrival success, queuelength {}'.format(self.length))
             return True
         else:
-            print('queue exploded')
+            print('queue exploded, queuelength {}'.format(self.length))
             return False
-        # 뭔가 처리를 해줘야함.. arrive 못받았을 때...
+            # 뭔가 처리를 해줘야함.. arrive 못받았을 때...
 
     # default는 그냥 자기 cpu로 처리하는 것
     def served(self, resource, type = 1):

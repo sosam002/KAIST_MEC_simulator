@@ -1,3 +1,5 @@
+import scipy.stats as stats
+
 SPEECH_RECOGNITION = 1
 NLP = 2
 FACE_RECOGNITION = 3
@@ -53,4 +55,14 @@ def app_type_pop():
     #     result.append([i, app_info[i]['popularity']])
     # return result
     return [(i, app_info[i]['popularity']) for i in list(app_info.keys())]
+
+def arrival_bits(app_type, dist = 'normal'):
+    min_bits = app_info[app_type]['min_bits']
+    max_bits = app_info[app_type]['max_bits']
+    mu = (min_bits+max_bits)/2
+    sigma = (max_bits-min_bits)/4
+    if dist=='normal':
+        return int(stats.truncnorm.rvs((min_bits-mu)/sigma, (max_bits-mu)/sigma, loc=mu, scale=sigma))
+    else:
+        return 1
 # import pdb; pdb.set_trace()

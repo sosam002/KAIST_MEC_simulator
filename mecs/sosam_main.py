@@ -28,7 +28,7 @@ def main():
     cloud_capability = 300000  # clock per tick
     channel = WIRED
     applications = (AR, VR)
-    task_rate = 10000 # 들어갈만한 다른 곳을 찾고 싶다.ㅠㅠ
+    task_rate = 10 # 들어갈만한 다른 곳을 찾고 싶다.ㅠㅠ
     # schedule_method = scheduler.RRScheduler().schedule
     # my_map.add_server(150, 150, server_capability, schedule_method)
     log_dir = 'result_sosam'

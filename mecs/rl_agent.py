@@ -30,7 +30,7 @@ def main():
     cloud_capability = 300000  # clock per tick
     channel = WIRED
     applications = (AR, VR)
-    task_rate = 10000 # 들어갈만한 다른 곳을 찾고 싶다.ㅠㅠ
+    task_rate = 10 # 들어갈만한 다른 곳을 찾고 싶다.ㅠㅠ
 
     log_dir = 'result_sosam'
     mobile_log = {}
@@ -44,8 +44,9 @@ def main():
     cloud_policy = [0.5, 0.5]
 
     for t in range(200001):
-        edge_server.random_task_generation(task_rate, t, VR, AR)
+        arrival_size = edge_server.random_task_generation(task_rate, t, VR, AR)
         # 이건 진짜 arrival rate 이 아님.. arrival만 저장하는걸 또 따로 만들어야 한다니 고통스럽다.
+        print(arrival_size)
         print(edge_server.queue_list[AR].tasks, edge_server.queue_list[VR].tasks)
         print(cloud_server.queue_list[AR].tasks, cloud_server.queue_list[VR].tasks)
 
@@ -93,6 +94,7 @@ def main():
 
         # get reward
         quad_Lyapunov_buffer.add(quad_Lyapunov(edge_server.queue_list)+quad_Lyapunov(cloud_server.queue_list))
+        import pdb; pdb.set_trace()
         quad_drift = quad_Lyapunov_buffer.get_drift()
         local_cost = local_energy_consumption(used_edge_cpu)
         server_cost = offload_cost(task_to_be_offloaded)

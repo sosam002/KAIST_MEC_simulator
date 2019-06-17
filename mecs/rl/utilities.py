@@ -28,20 +28,7 @@ def quad_Lyapunov(queue_list):
 def my_rewards(local_cost, server_cost, quad_drift, gamma_1=0.9, gamma_2=0.1, gamma_3=0.5, V=3):
     return V*(gamma_1*local_cost**2 + gamma_2 + gamma_3*server_cost**2) + quad_drift
 
-# class Buffer(object):
-# 	def __init__(self, max_size=100):
-# 		self.storage = []
-# 		self.max_size = max_size
-# 		self.ptr = 0
-#
-# 	def add(self, data):
-# 		if len(self.storage) == self.max_size:
-# 			self.storage[int(self.ptr)] = data
-# 			self.ptr = (self.ptr + 1) % self.max_size
-# 		else:
-# 			self.storage.append(data)
 
-# class Lyapunov_buffer(Buffer):
 class Lyapunov_buffer:
     def __init__(self, max_size=2, initial_storage=0):
         # super.__init__(max_size)
@@ -67,6 +54,18 @@ class Lyapunov_buffer:
 
     def get_buffer(self):
         return self.storage
+# class Buffer(object):
+# 	def __init__(self, max_size=100):
+# 		self.storage = []
+# 		self.max_size = max_size
+# 		self.ptr = 0
+#
+# 	def add(self, data):
+# 		if len(self.storage) == self.max_size:
+# 			self.storage[int(self.ptr)] = data
+# 			self.ptr = (self.ptr + 1) % self.max_size
+# 		else:
+# 			self.storage.append(data)
 
 #
 # class Replay_buffer(Buffer):
