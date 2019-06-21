@@ -13,7 +13,7 @@ from servernode_w_queue import ServerNode
 from applications import *
 from channels import *
 from rl.utilities import *
-import env
+import environment
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +29,9 @@ def evaluate_policy(policy, eval_episodes=10):
 
 	avg_reward /= eval_episodes
 
-	print "---------------------------------------"
-	print "Evaluation over %d episodes: %f" % (eval_episodes, avg_reward)
-	print "---------------------------------------"
+	print("---------------------------------------")
+	print("Evaluation over %d episodes: %f" % (eval_episodes, avg_reward))
+	print("---------------------------------------")
 	return avg_reward
 
 def main():
@@ -77,10 +77,10 @@ def main():
         shutil.rmtree(log_dir)
     os.mkdir(log_dir)
 
-	if not os.path.exists("./results"):
-		os.makedirs("./results")
-	if args.save_models and not os.path.exists("./pytorch_models"):
-		os.makedirs("./pytorch_models")
+    if not os.path.exists("./results"):
+        os.makedirs("./results")
+    if save_models and not os.path.exists("./pytorch_models"):
+        os.makedirs("./pytorch_models")
 
 
     cloud_policy = [0.5, 0.5]
@@ -92,6 +92,12 @@ def main():
 
     # TD3....eeeeeee
 	# env = gym.make(args.env_name)
+    ###################
+    edge_capability = 30000000000
+    cloud_capability = 30000000000000  # clock per tick
+    channel = WIRED
+    applications = (AR, VR)
+    ###################
     env = environment.Environment_sosam(10, *applications)
 
 	# Set seeds
@@ -102,21 +108,16 @@ def main():
     state_dim = len(app_info)*3
     action_dim = len(app_info)*2
     max_action = 1
-    policy = TD3.TD3(state_dim, action_dim, max_action)
+    # policy = TD3.TD3(state_dim, action_dim, max_action)
     replay_buffer = ReplayBuffer()
-    evaluations = [evaluate_policy(policy)]
+    # evaluations = [evaluate_policy(policy)]
 
     total_timesteps = 0
-    timestpes_since_eval = 0
+    timesteps_since_eval = 0
     episode_num = 0
     done = True
 
-###################
-    edge_capability = 30000000000
-    cloud_capability = 30000000000000  # clock per tick
-    channel = WIRED
-    applications = (AR, VR)
-###################
+
 
 
 
@@ -125,43 +126,44 @@ def main():
 
 
         if done:
-			if total_timesteps != 0:
-				print("Total T: %d Episode Num: %d Episode T: %d Reward: %f") % (total_timesteps, episode_num, episode_timesteps, episode_reward)
+            if total_timesteps != 0:
+                print("Total T: %d Episode Num: %d Episode T: %d Reward: %f") % (total_timesteps, episode_num, episode_timesteps, episode_reward)
                 policy.train(replay_buffer, episode_timesteps, batch_size, discount, tau, policy_noise, noise_clip, policy_freq)
-				# if args.policy_name == "TD3":
-		            # policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau, args.policy_noise, args.noise_clip, args.policy_freq)
-				# else:
-				# 	policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau)
+                # if args.policy_name == "TD3":
+                    # policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau, args.policy_noise, args.noise_clip, args.policy_freq)
+                # else:
+                # 	policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau)
 
-			# Evaluate episode
-			if timesteps_since_eval >= eval_freq:
-				timesteps_since_eval %= eval_freq
-				evaluations.append(evaluate_policy(policy))
+            # Evaluate episode
+            if timesteps_since_eval >= eval_freq:
+            	timesteps_since_eval %= eval_freq
+            	# evaluations.append(evaluate_policy(policy))
 
-				if save_models: policy.save(file_name, directory="./pytorch_models")
-				np.save("./results/%s" % (file_name), evaluations)
+            	# if save_models: policy.save(file_name, directory="./pytorch_models")
+            	# np.save("./results/%s" % (file_name), evaluations)
 
-			# Reset environment
+            # Reset environment
 
             # 헐.. env reset 만들어야 함!!!! 모든 걸 지우는..
             if total_timesteps==0:
                 obs = env.init_for_sosam(edge_capability, cloud_capability, channel)
             else:
                 obs = env.reset()
-			done = False
-			episode_reward = 0
-			episode_timesteps = 0
-			episode_num += 1
+            done = False
+            episode_reward = 0
+            episode_timesteps = 0
+            episode_num += 1
 
         # Select action
-		action = policy.select_action(np.array(obs))
+        # action = policy.select_action(np.array(obs))
+        action = [0.5,0.5]
         # 이거 노이즈 주는 방법 알아야 할 듯.. softmax로 하는데..
         # if expl_noise != 0:
 		# 	action = (action + np.random.normal(0, expl_noise, size= action_dim)).clip(0, 1))
 
 
-        new_obs, cost = env.step(action[:len(app_info)], action[len(app_info):], total_timesteps)
-
+        # new_obs, cost = env.step(action[:len(app_info)], action[len(app_info):], total_timesteps)
+        new_obs, cost = env.step(alpha, beta, cloud_policy, total_timesteps)
 
 
         done_bool = 0 if episode_timesteps + 1 == max_episode_steps else 1
@@ -185,9 +187,9 @@ def main():
         # mobile_log[t] = my_map.simulate_one_time(t)
 
     # Final evaluation
-	evaluations.append(evaluate_policy(policy))
-	if save_models: policy.save("%s" % (file_name), directory="./pytorch_models")
-	np.save("./results/%s" % (file_name), evaluations)
+    # evaluations.append(evaluate_policy(policy))
+    # if save_models: policy.save("%s" % (file_name), directory="./pytorch_models")
+    # np.save("./results/%s" % (file_name), evaluations)
 
 if __name__ == "__main__":
     config.initialize_mecs()

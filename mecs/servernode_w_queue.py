@@ -182,6 +182,9 @@ class ServerNode(Node):
     #
     def estimate_arrival_rate(self, interval=10):
         buffer = np.array(self.arrival_size_buffer.get_buffer())
+        import pdb; pdb.set_trace()
+        if buffer.all()==None:
+            return np.zeros(len(applications.app_info))
         return np.mean(buffer, axis=0)
 
     def get_status(self):

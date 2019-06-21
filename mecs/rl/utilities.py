@@ -51,8 +51,8 @@ class Lyapunov_buffer:
     def get_avg_drift(self):
         return self.storage[-1]-self.storage[0]
 
-    # def get_drift(self):
-    #     return self.storage[-1]-self.storage[-2]
+    def get_drift(self):
+        return self.storage[-1]-self.storage[-2]
 
     def get_buffer(self):
         return self.storage
