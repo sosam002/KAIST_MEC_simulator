@@ -1,4 +1,5 @@
 import json
+import torch
 import logging
 import os
 import shutil
@@ -24,10 +25,8 @@ def init_for_sosam(edge_capability, cloud_capability, channel, *applications):
     return edge_server, cloud_server
 
 def main():
-
-
-    edge_capability = 30000
-    cloud_capability = 300000  # clock per tick
+    edge_capability = 30000000000
+    cloud_capability = 30000000000000  # clock per tick
     channel = WIRED
     applications = (AR, VR)
     task_rate = 10 # 들어갈만한 다른 곳을 찾고 싶다.ㅠㅠ
@@ -43,12 +42,20 @@ def main():
 
     cloud_policy = [0.5, 0.5]
 
+    # 지금은 policy가 없으니까 내맘대로. edge_policy
+    alpha = [0.5,0.5]
+    beta = [0.5,0.5]
+
     for t in range(200001):
+        print("###### random task generation start! ######")
         arrival_size = edge_server.random_task_generation(task_rate, t, VR, AR)
+        print("###### random task generation ends! ######")
         # 이건 진짜 arrival rate 이 아님.. arrival만 저장하는걸 또 따로 만들어야 한다니 고통스럽다.
-        print(arrival_size)
-        print(edge_server.queue_list[AR].tasks, edge_server.queue_list[VR].tasks)
-        print(cloud_server.queue_list[AR].tasks, cloud_server.queue_list[VR].tasks)
+        print("random task arrival size {}".format(arrival_size))
+        print("edge server AR tasks {}".format(edge_server.queue_list[AR].tasks))
+        print("edge server VR tasks {}".format(edge_server.queue_list[VR].tasks))
+        print("cloud server AR tasks {}".format(cloud_server.queue_list[AR].tasks))
+        print("cloud server VR tasks {}".format(cloud_server.queue_list[VR].tasks))
 
 
         '''
@@ -61,18 +68,19 @@ def main():
         '''
         action받아오기! alpha, beta 받는 자리
         '''
-        # 지금은 policy가 없으니까 내맘대로
-        alpha = [0.5,0.5]
-        beta = [0.5,0.5]
+
 
         used_edge_cpu = edge_server.do_tasks(alpha)
+        print("do task on edge, CPU used {}".format(used_edge_cpu))
         used_tx, task_to_be_offloaded = edge_server.offload_tasks(beta, cloud_server.get_uuid())
+        print("offload task to cloud, used_tx {}, offloaded task {}".format(used_tx, task_to_be_offloaded))
         cloud_server.offloaded_tasks(task_to_be_offloaded, t)
         used_cloud_cpu = cloud_server.do_tasks(cloud_policy)
+        print("do task on cloud, CPU used {}".format(used_cloud_cpu))
 
 
         # used_tx, task_to_be_offloaded = edge_server.do_and_offload( alpha, beta, cloud_server.get_uuid() )
-        print("used_edge_cpu {}, used_tx {}, used_cloud_cpu {}".format(used_edge_cpu, used_tx, used_cloud_cpu))
+        # print("used_edge_cpu {}, used_tx {}, used_cloud_cpu {}".format(used_edge_cpu, used_tx, used_cloud_cpu))
         # import pdb; pdb.set_trace()
         '''
         used_cpu랑 offload 정보 받아서 reward 받는 자리
@@ -85,16 +93,20 @@ def main():
         '''
 
         # get state
-        edge_state = edge_server.get_status()
-        cloud_state = cloud_server.get_status()
         estimated_arrival_rate = list(edge_server.estimate_arrival_rate())
+        print("estimated_arrival_rate_state = {}".format(estimated_arrival_rate))
+        edge_state = edge_server.get_status()
+        print("edge state (queue length+cpu cap.) = {}".format(edge_state))
+        cloud_state = cloud_server.get_status()
+        print("cloud state (queue length+cpu cap.) = {}".format(cloud_state))
+
         # 어휴
         state = estimated_arrival_rate + edge_state + cloud_state + [edge_server.get_channel_rate(cloud_server.get_uuid())]
-        print("state = {}".format(state))
+        print("states + channel rate = {}".format(state))
 
         # get reward
         quad_Lyapunov_buffer.add(quad_Lyapunov(edge_server.queue_list)+quad_Lyapunov(cloud_server.queue_list))
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         quad_drift = quad_Lyapunov_buffer.get_drift()
         local_cost = local_energy_consumption(used_edge_cpu)
         server_cost = offload_cost(task_to_be_offloaded)

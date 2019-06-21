@@ -63,6 +63,7 @@ class ServerNode(Node):
         app_type_list = list(self.queue_list.keys())
         cpu_allocs = dict(zip(app_type_list, alpha))
         for app_type in app_type_list:
+            print("### do_task for app_type{} ###".format(app_type))
             if cpu_allocs[app_type] == 0:
                 pass
             else:
@@ -94,7 +95,7 @@ class ServerNode(Node):
     '''
 
     def get_channel_rate(self, id_to_offload):
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         return get_channel_info(self.links_to_higher[id_to_offload]['channel'], 'rate')
 
     # 모든 application에 대한 액션 alpha, 실제 활용한 총 cpu 비율 return
@@ -105,6 +106,7 @@ class ServerNode(Node):
         tx_allocs = dict(zip(app_type_list, np.array(beta)*channel_rate))
         # import pdb; pdb.set_trace()
         tx_allocs = self._probe(tx_allocs, id_to_offload)
+        print("## can I offload? tx_allocs bits {} ##".format(tx_allocs))
         # import pdb; pdb.set_trace()
         task_to_be_offloaded = {}
         for app_type in app_type_list:
@@ -134,7 +136,7 @@ class ServerNode(Node):
             task_ob.server_index = self.get_uuid()
             task_ob.set_arrival_time = arrival_timestamp
             if not self.queue_list[task_ob.application_type].arrived(task_ob):
-                print("queue exploded queue exploded i'm 'offloaded_tasks'")
+                print("queue exploded queue exploded i'm an 'offloaded_tasks'")
             # task가 받아지지 않았을 때 role back 해야 하는데 ㅠㅠ
         return
 
@@ -157,7 +159,7 @@ class ServerNode(Node):
                     arrival_size[app_type-1]= data_size
                     print("arrival of app_type{} : {}".format(app_type, data_size))
                 else:
-                    print("no arrival of app_type{} occured")
+                    print("no arrival of app_type{} occured".format(app_type))
             else:
                 pass
         self.arrival_size_buffer.add(arrival_size)

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class TaskQueue(object):
 
-    def __init__(self, app_type, max_length=9999999):
+    def __init__(self, app_type, max_length=9999999999999):
         self.uuid = uuid.uuid4()
         self.max_length = max_length
         self.tasks = collections.OrderedDict()
@@ -57,6 +57,7 @@ class TaskQueue(object):
     # default는 그냥 자기 cpu로 처리하는 것
     def served(self, resource, type = 1):
         # import pdb; pdb.set_trace()
+        print("########### compute or offload : inside of task_queue.served ##########")
         if resource == 0:
             return
         else:
@@ -64,41 +65,58 @@ class TaskQueue(object):
             offloaded_tasks = {}
             if type:
                 to_be_served = int(resource/applications.app_info[self.app_type]['workload'])
+                served_task_bits = 0
+                print("data size to be served : {}".format(to_be_served))
                 for task_id, task_ob in self.tasks.items():
                     task_size = task_ob.data_size
+                    print("task_size : {}".format(task_size))
                     if to_be_served >= task_size:
+                        print("data size can be served >= task_size case")
                         task_to_remove.append(task_id)
                         to_be_served = to_be_served - task_size
+                        served_task_bits += task_size
                         self.length = self.length - task_size
+                        print("remained queue_length of type{} : {}".format(self.app_type, self.length))
                     elif to_be_served > 0:
+                        print("data size to be served < task_size case")
                         task_size = task_size - to_be_served
                         self.tasks[task_id].data_size = task_size
                         self.length = self.length - to_be_served
+                        served_task_bits += to_be_served
+                        print("remained queue_length of type{} : {}".format(self.app_type, self.length))
                         to_be_served = 0
                     else:
-                        print('All tasks are done in task_queue.served(type=1)')
+                        print("no more data to be served remained! {}".format(to_be_served))
+                        print('All tasks are done in task_queue.served(type=1) - computed')
                         break
-                used_resource = resource - to_be_served*applications.app_info[self.app_type]['workload']
+                used_resource = served_task_bits*applications.app_info[self.app_type]['workload']
             else:
                 to_be_offloaded = resource
+                print("data size to be offloaded : {}".format(to_be_offloaded))
                 for task_id, task_ob in self.tasks.items():
                     task_size = task_ob.data_size
+                    print("task_size : {}".format(task_size))
                     if to_be_offloaded >= task_size:
+                        print("data size can be offloaded >= task_size case")
                         offloaded_tasks[task_id] = task_ob
                         task_to_remove.append(task_id)
                         to_be_offloaded = to_be_offloaded - task_size
                         self.length = self.length - task_size
+                        print("remained queue_length of type{} : {}".format(self.app_type, self.length))
                     elif to_be_offloaded > 0:
+                        print("data size to be offloaded < task_size case")
                         new_task = task_ob.make_child_task(to_be_offloaded)
                         offloaded_tasks[new_task.get_uuid()] = new_task
                         task_size = task_size - to_be_offloaded
                         self.length = self.length - to_be_offloaded
+                        print("remained queue_length of type{} : {}".format(self.app_type, self.length))
                         to_be_offloaded = 0
                     else:
-                        print('All tasks are done in task_queue.served(type=0)')
+                        print('All tasks are done in task_queue.served(type=0) - offloaded')
                         break
                     used_resource = resource - to_be_offloaded
             self.remove_multiple_tasks(task_to_remove)
+            print("########### task_queue.served ends ###########")
             return used_resource, offloaded_tasks
 
     def past_queue_length(self, t, interval=1):
