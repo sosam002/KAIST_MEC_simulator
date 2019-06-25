@@ -13,15 +13,15 @@ from servernode_w_queue import ServerNode
 from applications import *
 from channels import *
 from rl.utilities import *
+from constants import *
 
 logger = logging.getLogger(__name__)
 _parent = pathlib.Path(__file__).parent
 
 
 class Environment_sosam:
-    def __init__(self, task_rate, *applications):
-        self.task_rate = 10
-        # 으으
+    def __init__(self, task_rate, *applications, time_delta=10*MS):
+        self.task_rate = 10/time_delta
         self.clients = []
         self.servers = []
         self.links = dict()
@@ -99,7 +99,7 @@ class Environment_sosam:
             arrival_size = self.clients[0].random_task_generation(self.task_rate, time, *self.applications)
             print("###### random task generation ends! ######")
             # 이건 진짜 arrival rate 이 아님.. arrival만 저장하는걸 또 따로 만들어야 한다니 고통스럽다.
-            print("random task arrival size {}".format(arrival_size))
+            # print("random task arrival size {}".format(arrival_size))
         #
         # print("edge server AR tasks {}".format(self.clients[0].queue_list[AR].tasks))
         # print("edge server VR tasks {}".format(self.clients[0].queue_list[VR].tasks))
@@ -108,12 +108,12 @@ class Environment_sosam:
         # self.print_queue_lists()
 
         used_edge_cpu = self.clients[0].do_tasks(action_alpha)
-        print("do task on edge, CPU used {}".format(used_edge_cpu))
+        # print("do task on edge, CPU used {}".format(used_edge_cpu))
         used_tx, task_to_be_offloaded = self.clients[0].offload_tasks(action_beta, self.servers[0].get_uuid())
-        print("offload task to cloud, used_tx {}, offloaded task {}".format(used_tx, task_to_be_offloaded))
+        # print("offload task to cloud, used_tx {}, offloaded task {}".format(used_tx, task_to_be_offloaded))
         self.servers[0].offloaded_tasks(task_to_be_offloaded, time)
         used_cloud_cpu = self.servers[0].do_tasks(action_cloud)
-        print("do task on cloud, CPU used {}".format(used_cloud_cpu))
+        # print("do task on cloud, CPU used {}".format(used_cloud_cpu))
 
     ######################################################################################## 이게 모조리 step 함수
 
@@ -124,14 +124,14 @@ class Environment_sosam:
 
     def get_status(self):
         estimated_arrival_rate = list(self.clients[0].estimate_arrival_rate())
-        print("estimated_arrival_rate_state = {}".format(estimated_arrival_rate))
+        # print("estimated_arrival_rate_state = {}".format(estimated_arrival_rate))
         edge_state = self.clients[0].get_status()
-        print("edge state (queue length+cpu cap.) = {}".format(edge_state))
+        # print("edge state (queue length+cpu cap.) = {}".format(edge_state))
         cloud_state = self.servers[0].get_status()
-        print("cloud state (queue length+cpu cap.) = {}".format(cloud_state))
+        # print("cloud state (queue length+cpu cap.) = {}".format(cloud_state))
         # state = estimated_arrival_rate + edge_state + cloud_state + [self.clients[0].get_channel_rate(self.servers[0].get_uuid())/1000000000]
         state = estimated_arrival_rate + edge_state + cloud_state + [self.clients[0].get_channel_rate(self.servers[0].get_uuid())]
-        print("states + channel rate = {}".format(state))
+        # print("states + channel rate = {}".format(state))
         state = np.log(np.array(state).clip(1))
         return state
 

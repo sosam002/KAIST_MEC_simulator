@@ -97,7 +97,7 @@ class ServerNode(Node):
 
     def get_channel_rate(self, id_to_offload):
         # import pdb; pdb.set_trace()
-        return get_channel_info(self.links_to_higher[id_to_offload]['channel'], 'rate')
+        return get_channel_info(self.links_to_higher[id_to_offload]['channel'])
 
     # 모든 application에 대한 액션 alpha, 실제 활용한 총 cpu 비율 return
     def offload_tasks(self, beta, id_to_offload):

@@ -1,47 +1,39 @@
 import scipy.stats as stats
-
-SPEECH_RECOGNITION = 1
-NLP = 2
-FACE_RECOGNITION = 3
-SEARCH_REQ = 4
-LANGUAGE_TRANSLATION = 5
-PROC_3D_GAME = 6
-VR = 7
-AR = 8
+from constants import *
 
 app_info={
-    1 : {'workload':10435,
+    SPEECH_RECOGNITION : {'workload':10435,
         'popularity': 0.25,
-        'min_bits':80000,
-        'max_bits':800000
-    },2 : {'workload':25346,
+        'min_bits':80000*BYTE,
+        'max_bits':800000*BYTE
+    },NLP : {'workload':25346,
         'popularity': 0.1,
-        'min_bits':300,
-        'max_bits':1400
-    },3 : {'workload':45043,
+        'min_bits':300*BYTE,
+        'max_bits':1400*BYTE
+    },FACE_RECOGNITION : {'workload':45043,
         'popularity': 0.1,
-        'min_bits':300000,
-        'max_bits':30000000
-    },4 : {'workload':8405,
+        'min_bits':300000*BYTE,
+        'max_bits':30000000*BYTE
+    },SEARCH_REQ : {'workload':8405,
         'popularity': 0.15,
         'min_bits':400,
-        'max_bits':700
-    },5 : {'workload':34252,
+        'max_bits':700*BYTE
+    },LANGUAGE_TRANSLATION : {'workload':34252,
         'popularity': 0.1,
-        'min_bits':300,
-        'max_bits':4000
-    },6 : {'workload':54633,
+        'min_bits':300*BYTE,
+        'max_bits':4000*BYTE
+    },PROC_3D_GAME : {'workload':54633,
         'popularity': 0.1,
-        'min_bits':100000,
-        'max_bits':3000000
-    },7 : {'workload':40305,
+        'min_bits':100000*BYTE,
+        'max_bits':3000000*BYTE
+    },VR : {'workload':40305,
         'popularity': 0.1,
-        'min_bits':100000,
-        'max_bits':3000000
-    },8 : {'workload':34532,
+        'min_bits':100000*BYTE,
+        'max_bits':3000000*BYTE
+    },AR : {'workload':34532,
         'popularity': 0.1,
-        'min_bits':100000,
-        'max_bits':3000000
+        'min_bits':100000*BYTE,
+        'max_bits':3000000*BYTE
     }
 }
 

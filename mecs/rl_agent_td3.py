@@ -13,6 +13,7 @@ from servernode_w_queue import ServerNode
 from applications import *
 from channels import *
 from rl.utilities import *
+from constants import *
 import rl.td3 as TD3
 import environment
 
@@ -57,7 +58,7 @@ def main():
 	seed = 0
 	start_timesteps = 1e4
 	eval_freq = 5e3
-	max_timesteps = 20000000
+	max_timesteps = 100000
 	expl_noise = 0.1
 	batch_size = 100
 	discount = 0.99
@@ -94,8 +95,8 @@ def main():
     # TD3....eeeeeee
 	# env = gym.make(args.env_name)
     ###################
-	edge_capability = 30000000
-	cloud_capability = 30000000000  # clock per tick
+	edge_capability = 2.5*1e2*GHZ
+	cloud_capability = 2.5*1e4*GHZ  # clock per tick
 	channel = WIRED
 	applications = SPEECH_RECOGNITION,NLP, FACE_RECOGNITION, SEARCH_REQ, LANGUAGE_TRANSLATION, PROC_3D_GAME, VR, AR
     ###################

@@ -1,34 +1,39 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
-
-LTE = 1
-WIFI = 2
-BT = 3
-NFC = 4
-WIRED = 5
+from constants import *
 
 channel_info = {
-    1 : {'bw': [],
-        'rate': []
-    },2 : {'bw': [],
-        'rate': []
-    },3 : {'bw': [],
-        'rate': []
-    },4 : {'bw': [],
-        'rate': []
-    },5 : {'bw': [],
-        'rate': [10000000000]
+    LTE : {'bw': [],
+        'max_coverage':[],
+        'up': 75*MBPS,
+        'down': 300*MBPS
+    },WIFI : {'bw': [],
+        'rate':135*MBPS
+    },BT : {'bw': [],
+        'rate': 22*MBPS
+    },NFC : {'bw': [],
+        'rate': 212*KBPS
+    },WIRED : {'bw': [],
+        'rate': 10*GBPS
     }
 }
 
 logger = logging.getLogger(__name__)
 
-def get_channel_info (channel, info = 'rate', index = 0):
-    if info == 'rate':
-        return channel_info[channel]['rate'][index]
+def get_channel_info (channel, info = 'rate', index = 0, uplink=True):
     if info == 'bw':
-        return channel_info[channel]['bw'][index]
+        return channel_info[channel]['bw']
+
+    if channel == LTE:
+        if uplink:
+            return channel_info[channel]['up']
+        else:
+            return channel_info[channel]['down']
+    else:
+        return channel_info[channel]['rate']
+
+
 # values = plt.hist(np.random.rayleigh(3, 100000), bins=200, normed=True)
 # plt.show()
 #
