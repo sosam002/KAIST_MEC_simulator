@@ -13,19 +13,20 @@ from servernode_w_queue import ServerNode
 from applications import *
 from channels import *
 from rl.utilities import *
+import rl.td3 as TD3
 import environment
 
 logger = logging.getLogger(__name__)
 
-def evaluate_policy(policy, eval_episodes=10):
+def evaluate_policy(env, policy, cloud_policy, eval_episodes=10):
 	avg_reward = 0.
-	for _ in xrange(eval_episodes):
+	for _ in range(eval_episodes):
 		obs = env.reset()
 		done = False
-		while not done:
+		for t in range(10000):
 			action = policy.select_action(np.array(obs))
-			obs, reward, done, _ = env.step(action)
-			avg_reward += reward
+			obs, cost = env.step(action[:len(app_info)], action[len(app_info):], cloud_policy, t)
+			avg_reward -= cost
 
 	avg_reward /= eval_episodes
 
@@ -53,129 +54,139 @@ def main():
 	# parser.add_argument("--policy_freq", default=2, type=int)			# Frequency of delayed policy updates
 	# args = parser.parse_args()
 
-    seed = 0
-    start_timesteps = 1e4
-    eval_freq = 5e3
-    max_timesteps = 20000000
-    expl_noise = 0.1
-    batch_size = 100
-    discount = 0.99
-    tau = 0.005
-    policy_noise = 0.2
-    noise_clip = 0.2
-    policy_freq = 2
-    save_models = True
+	seed = 0
+	start_timesteps = 1e4
+	eval_freq = 5e3
+	max_timesteps = 20000000
+	expl_noise = 0.1
+	batch_size = 100
+	discount = 0.99
+	tau = 0.005
+	policy_noise = 0.2
+	noise_clip = 0.2
+	policy_freq = 2
+	save_models = True
 
-    # 원래 gym env에서 주는 것들?
-    max_episode_steps = 10000
-
-
-
-    log_dir = 'result_sosam'
-    mobile_log = {}
-    if os.path.isdir(log_dir):
-        shutil.rmtree(log_dir)
-    os.mkdir(log_dir)
-
-    if not os.path.exists("./results"):
-        os.makedirs("./results")
-    if save_models and not os.path.exists("./pytorch_models"):
-        os.makedirs("./pytorch_models")
+	# 원래 gym env에서 주는 것들?
+	max_episode_steps = 10000
 
 
-    cloud_policy = [0.5, 0.5]
+
+	log_dir = 'result_sosam'
+	mobile_log = {}
+	if os.path.isdir(log_dir):
+	    shutil.rmtree(log_dir)
+	os.mkdir(log_dir)
+
+	if not os.path.exists("./results"):
+	    os.makedirs("./results")
+	if save_models and not os.path.exists("./pytorch_models"):
+	    os.makedirs("./pytorch_models")
+
+
+	cloud_policy = [0.125]*8
 
     # 지금은 policy가 없으니까 내맘대로. edge_policy
-    alpha = [0.5,0.5]
-    beta = [0.5,0.5]
+    # alpha = [0.5,0.5]
+    # beta = [0.5,0.5]
 
 
     # TD3....eeeeeee
 	# env = gym.make(args.env_name)
     ###################
-    edge_capability = 30000000000
-    cloud_capability = 30000000000000  # clock per tick
-    channel = WIRED
-    applications = (AR, VR)
+	edge_capability = 30000000
+	cloud_capability = 30000000000  # clock per tick
+	channel = WIRED
+	applications = SPEECH_RECOGNITION,NLP, FACE_RECOGNITION, SEARCH_REQ, LANGUAGE_TRANSLATION, PROC_3D_GAME, VR, AR
     ###################
-    env = environment.Environment_sosam(10, *applications)
+	env = environment.Environment_sosam(10, *applications)
 
-	# Set seeds
-	# env.seed(args.seed)
-	# torch.manual_seed(args.seed)
-	# np.random.seed(args.seed)
+	torch.manual_seed(seed)
+	np.random.seed(seed)
 
-    state_dim = len(app_info)*3
-    action_dim = len(app_info)*2
-    max_action = 1
-    # policy = TD3.TD3(state_dim, action_dim, max_action)
-    replay_buffer = ReplayBuffer()
-    # evaluations = [evaluate_policy(policy)]
+# Set seeds
+# env.seed(args.seed)
+# torch.manual_seed(seed)
+# np.random.seed(seed)
 
-    total_timesteps = 0
-    timesteps_since_eval = 0
-    episode_num = 0
-    done = True
+	state_dim = len(app_info)*3+3
+	action_dim = len(app_info)*2
+	max_action = 1
+	policy = TD3.TD3(state_dim, action_dim, max_action)
+	replay_buffer = ReplayBuffer()
+	# evaluations = [evaluate_policy(env, policy, cloud_policy)]
+	evaluations = []
 
-
-
-
-
-
-    while total_timesteps < max_timesteps:
+	total_timesteps = 0
+	timesteps_since_eval = 0
+	episode_num = 0
+	done = True
 
 
-        if done:
-            if total_timesteps != 0:
-                print("Total T: %d Episode Num: %d Episode T: %d Reward: %f") % (total_timesteps, episode_num, episode_timesteps, episode_reward)
-                policy.train(replay_buffer, episode_timesteps, batch_size, discount, tau, policy_noise, noise_clip, policy_freq)
-                # if args.policy_name == "TD3":
-                    # policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau, args.policy_noise, args.noise_clip, args.policy_freq)
-                # else:
-                # 	policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau)
-
-            # Evaluate episode
-            if timesteps_since_eval >= eval_freq:
-            	timesteps_since_eval %= eval_freq
-            	# evaluations.append(evaluate_policy(policy))
-
-            	# if save_models: policy.save(file_name, directory="./pytorch_models")
-            	# np.save("./results/%s" % (file_name), evaluations)
-
-            # Reset environment
-
-            # 헐.. env reset 만들어야 함!!!! 모든 걸 지우는..
-            if total_timesteps==0:
-                obs = env.init_for_sosam(edge_capability, cloud_capability, channel)
-            else:
-                obs = env.reset()
-            done = False
-            episode_reward = 0
-            episode_timesteps = 0
-            episode_num += 1
-
-        # Select action
-        # action = policy.select_action(np.array(obs))
-        action = [0.5,0.5]
-        # 이거 노이즈 주는 방법 알아야 할 듯.. softmax로 하는데..
-        # if expl_noise != 0:
-		# 	action = (action + np.random.normal(0, expl_noise, size= action_dim)).clip(0, 1))
 
 
-        # new_obs, cost = env.step(action[:len(app_info)], action[len(app_info):], total_timesteps)
-        new_obs, cost = env.step(alpha, beta, cloud_policy, total_timesteps)
 
 
-        done_bool = 0 if episode_timesteps + 1 == max_episode_steps else 1
-        episode_reward -= cost
+	while total_timesteps < max_timesteps:
 
-        replay_buffer.add((obs, new_obs, action, -cost, done_bool))
+		if done:
+			if total_timesteps != 0:
+				print("Total T: %d Episode Num: %d Episode T: %d Reward: %f") % (total_timesteps, episode_num, episode_timesteps, episode_reward)
+				policy.train(replay_buffer, episode_timesteps, batch_size, discount, tau, policy_noise, noise_clip, policy_freq)
+				# if args.policy_name == "TD3":
+				    # policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau, args.policy_noise, args.noise_clip, args.policy_freq)
+				# else:
+				# 	policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau)
 
-        obs = new_obs
+	        # Evaluate episode
+			if timesteps_since_eval >= eval_freq:
+				timesteps_since_eval %= eval_freq
+				evaluations.append(evaluate_policy(env, policy, cloud_policy))
 
-        episode_timesteps += 1
-        total_timesteps += 1
-        timesteps_since_eval +=1
+				if save_models: policy.save(file_name, directory="./pytorch_models")
+				np.save("./results/%s" % (file_name), evaluations)
+
+			# Reset environment
+
+	        # 헐.. env reset 만들어야 함!!!! 모든 걸 지우는..
+			if total_timesteps==0:
+			    obs = env.init_for_sosam(edge_capability, cloud_capability, channel)
+			else:
+				obs = env.reset()
+			done = False
+			episode_reward = 0
+			episode_timesteps = 0
+			episode_num += 1
+
+		# Select action
+		action = policy.select_action(np.array(obs))
+		print("#############################action####{}".format(action))
+	    # action = [0.5,0.5]
+	    # 이거 노이즈 주는 방법 알아야 할 듯.. softmax로 하는데..
+		if expl_noise !=0:
+			action = (action+np.random.normal(0,expl_noise,size=action_dim)).clip(0)
+			action = np.concatenate( (action[:len(app_info)] / np.sum(action[:len(app_info)]), action[len(app_info):] / np.sum(action[len(app_info):])) )
+			print("#################################action####{}".format(action))
+			# import pdb; pdb.set_trace()
+		#
+		# if expl_noise != 0:
+		# 	action = action + np.random.normal(0, expl_noise, size= action_dim))
+		# 	import pdb; pdb.set_trace()
+		# 	action[:len(app_info)] = action[:len(app_info)] / np.sum(action[:len(app_info)])
+
+
+		new_obs, cost = env.step(action[:len(app_info)], action[len(app_info):], cloud_policy, total_timesteps)
+        # new_obs, cost = env.step(alpha, beta, cloud_policy, total_timesteps)
+
+		done_bool = 0 if episode_timesteps + 1 == max_episode_steps else 1
+		episode_reward -= cost
+
+		replay_buffer.add((obs, new_obs, action, -cost, done_bool))
+
+		obs = new_obs
+		episode_timesteps += 1
+		total_timesteps += 1
+		timesteps_since_eval +=1
 
 
         # if t % 1000 == 0:
@@ -188,8 +199,9 @@ def main():
 
     # Final evaluation
     # evaluations.append(evaluate_policy(policy))
-    # if save_models: policy.save("%s" % (file_name), directory="./pytorch_models")
-    # np.save("./results/%s" % (file_name), evaluations)
+	evaluations.append(evaluate_policy(env, policy, cloud_policy))
+	if save_models: policy.save("%s" % (file_name), directory="./pytorch_models")
+	np.save("./results/%s" % (file_name), evaluations)
 
 if __name__ == "__main__":
     config.initialize_mecs()

@@ -50,7 +50,7 @@ class Environment_sosam:
     def add_link(self, client_num, server_num, up_channel, down_channel=None):
         if not down_channel:
             down_channel = up_channel
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         client = self.clients[client_num]
         server = self.servers[server_num]
         client.links_to_higher[server.get_uuid()]= {
@@ -105,7 +105,7 @@ class Environment_sosam:
         # print("edge server VR tasks {}".format(self.clients[0].queue_list[VR].tasks))
         # print("cloud server AR tasks {}".format(self.servers[0].queue_list[AR].tasks))
         # print("cloud server VR tasks {}".format(self.servers[0].queue_list[VR].tasks))
-        self.print_queue_lists()
+        # self.print_queue_lists()
 
         used_edge_cpu = self.clients[0].do_tasks(action_alpha)
         print("do task on edge, CPU used {}".format(used_edge_cpu))
@@ -129,8 +129,10 @@ class Environment_sosam:
         print("edge state (queue length+cpu cap.) = {}".format(edge_state))
         cloud_state = self.servers[0].get_status()
         print("cloud state (queue length+cpu cap.) = {}".format(cloud_state))
+        # state = estimated_arrival_rate + edge_state + cloud_state + [self.clients[0].get_channel_rate(self.servers[0].get_uuid())/1000000000]
         state = estimated_arrival_rate + edge_state + cloud_state + [self.clients[0].get_channel_rate(self.servers[0].get_uuid())]
         print("states + channel rate = {}".format(state))
+        state = np.log(np.array(state).clip(1))
         return state
 
     def get_reward(self, used_edge_cpu, task_to_be_offloaded):

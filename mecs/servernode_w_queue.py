@@ -59,14 +59,14 @@ class ServerNode(Node):
 
     # 모든 application에 대한 액션 alpha, 실제 활용한 총 cpu 비율 return
     def do_tasks(self, alpha):
-        # app_type_list = applications.app_type_list()
-        app_type_list = list(self.queue_list.keys())
+        app_type_list = applications.app_type_list()
+        # app_type_list = list(self.queue_list.keys())
         cpu_allocs = dict(zip(app_type_list, alpha))
         for app_type in app_type_list:
-            print("### do_task for app_type{} ###".format(app_type))
-            if cpu_allocs[app_type] == 0:
+            if cpu_allocs[app_type] == 0 or (app_type not in self.queue_list.keys()):
                 pass
             else:
+                print("### do_task for app_type{} ###".format(app_type))
                 my_task_queue = self.queue_list[app_type]
                 if my_task_queue.length:
                     cpu_allocs[app_type], _ = my_task_queue.served(cpu_allocs[app_type]*self.computation_capability, type=1)
@@ -80,11 +80,12 @@ class ServerNode(Node):
         node_to_offload = self.links_to_higher[id_to_offload]['node']
         # import pdb; pdb.set_trace()
         for app_type, bits in bits_to_be_arrived.items():
-            node_app_queue = node_to_offload.queue_list[app_type]
-            if node_app_queue.max_length < node_app_queue.length + bits:
-                bits_to_be_arrived[app_type] = 0
-            else:
-                pass
+            if (app_type in self.queue_list.keys()):
+                node_app_queue = node_to_offload.queue_list[app_type]
+                if node_app_queue.max_length < node_app_queue.length + bits:
+                    bits_to_be_arrived[app_type] = 0
+                else:
+                    pass
         return bits_to_be_arrived
 
 
@@ -102,7 +103,8 @@ class ServerNode(Node):
     def offload_tasks(self, beta, id_to_offload):
         # 문제가 좀 있음.. channel.py에 channel을 좀 손봐야 함
         channel_rate = self.get_channel_rate(id_to_offload)
-        app_type_list = list(self.queue_list.keys())
+        app_type_list = applications.app_type_list()
+        # app_type_list = list(self.queue_list.keys())
         tx_allocs = dict(zip(app_type_list, np.array(beta)*channel_rate))
         # import pdb; pdb.set_trace()
         tx_allocs = self._probe(tx_allocs, id_to_offload)
@@ -110,7 +112,7 @@ class ServerNode(Node):
         # import pdb; pdb.set_trace()
         task_to_be_offloaded = {}
         for app_type in app_type_list:
-            if tx_allocs[app_type] ==0 :
+            if tx_allocs[app_type] ==0 or (app_type not in self.queue_list.keys()):
                 pass
             else:
                 my_task_queue = self.queue_list[app_type]
@@ -182,7 +184,6 @@ class ServerNode(Node):
     #
     def estimate_arrival_rate(self, interval=10):
         buffer = np.array(self.arrival_size_buffer.get_buffer())
-        import pdb; pdb.set_trace()
         if buffer.all()==None:
             return np.zeros(len(applications.app_info))
         return np.mean(buffer, axis=0)
@@ -207,3 +208,4 @@ class ServerNode(Node):
         # 아 채널 스테이트도 받아와야 하는데 ㅠㅠ 일단 메인에서 받는다
 
         return list(queue_lengths) + [self.computation_capability]
+        # return list(queue_lengths) + [self.computation_capability/1000000000]
