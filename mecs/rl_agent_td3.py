@@ -24,7 +24,11 @@ def evaluate_policy(env, policy, cloud_policy, eval_episodes=10):
 	for _ in range(eval_episodes):
 		obs = env.reset()
 		done = False
+		print(policy.actor.l1.weight)
+		import pdb; pdb.set_trace()
+
 		for t in range(10000):
+
 			action = policy.select_action(np.array(obs))
 			obs, cost = env.step(action[:len(app_info)], action[len(app_info):], cloud_policy, t)
 			avg_reward -= cost
@@ -57,7 +61,8 @@ def main():
 
 	seed = 0
 	start_timesteps = 1e4
-	eval_freq = 5e3
+	# eval_freq = 5e3
+	eval_freq = 4000
 	max_timesteps = 100000
 	expl_noise = 0.1
 	batch_size = 100
@@ -69,7 +74,7 @@ def main():
 	save_models = True
 
 	# 원래 gym env에서 주는 것들?
-	max_episode_steps = 10000
+	max_episode_steps = 2000
 
 
 
@@ -83,6 +88,8 @@ def main():
 	    os.makedirs("./results")
 	if save_models and not os.path.exists("./pytorch_models"):
 	    os.makedirs("./pytorch_models")
+
+	file_name = 'test'
 
 
 	cloud_policy = [0.125]*8
@@ -132,7 +139,8 @@ def main():
 
 		if done:
 			if total_timesteps != 0:
-				print("Total T: %d Episode Num: %d Episode T: %d Reward: %f") % (total_timesteps, episode_num, episode_timesteps, episode_reward)
+				# import pdb; pdb.set_trace()
+				print("Total T: {} Episode Num: {} Episode T: {} Reward: {}".format(total_timesteps, episode_num, episode_timesteps, episode_reward))
 				policy.train(replay_buffer, episode_timesteps, batch_size, discount, tau, policy_noise, noise_clip, policy_freq)
 				# if args.policy_name == "TD3":
 				    # policy.train(replay_buffer, episode_timesteps, args.batch_size, args.discount, args.tau, args.policy_noise, args.noise_clip, args.policy_freq)
@@ -143,6 +151,7 @@ def main():
 			if timesteps_since_eval >= eval_freq:
 				timesteps_since_eval %= eval_freq
 				evaluations.append(evaluate_policy(env, policy, cloud_policy))
+				# import pdb; pdb.set_trace()
 
 				if save_models: policy.save(file_name, directory="./pytorch_models")
 				np.save("./results/%s" % (file_name), evaluations)
@@ -158,6 +167,7 @@ def main():
 			episode_reward = 0
 			episode_timesteps = 0
 			episode_num += 1
+			# import pdb; pdb.set_trace()
 
 		# Select action
 		action = policy.select_action(np.array(obs))
@@ -179,7 +189,10 @@ def main():
 		new_obs, cost = env.step(action[:len(app_info)], action[len(app_info):], cloud_policy, total_timesteps)
         # new_obs, cost = env.step(alpha, beta, cloud_policy, total_timesteps)
 
-		done_bool = 0 if episode_timesteps + 1 == max_episode_steps else 1
+		# done_bool = 0 if episode_timesteps + 1 == max_episode_steps else 1
+		if episode_timesteps == max_episode_steps:
+			done = True
+		done_bool = 1-float(done)
 		episode_reward -= cost
 
 		replay_buffer.add((obs, new_obs, action, -cost, done_bool))
@@ -200,6 +213,7 @@ def main():
 
     # Final evaluation
     # evaluations.append(evaluate_policy(policy))
+	# import pdb; pdb.set_trace()
 	evaluations.append(evaluate_policy(env, policy, cloud_policy))
 	if save_models: policy.save("%s" % (file_name), directory="./pytorch_models")
 	np.save("./results/%s" % (file_name), evaluations)

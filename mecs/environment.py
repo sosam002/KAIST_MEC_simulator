@@ -91,13 +91,13 @@ class Environment_sosam:
 
         return
 
-    def step(self, action_alpha, action_beta, action_cloud, time, generate_random_task=True):
+    def step(self, action_alpha, action_beta, action_cloud, time, generate_random_task=True, silence =True):
         ######################################################################################## 이게 모조리 step 함수
         # perform action (simulation)
         if generate_random_task:
-            print("###### random task generation start! ######")
+            if not silence: print("###### random task generation start! ######")
             arrival_size = self.clients[0].random_task_generation(self.task_rate, time, *self.applications)
-            print("###### random task generation ends! ######")
+            if not silence: print("###### random task generation ends! ######")
             # 이건 진짜 arrival rate 이 아님.. arrival만 저장하는걸 또 따로 만들어야 한다니 고통스럽다.
             # print("random task arrival size {}".format(arrival_size))
         #
@@ -135,11 +135,11 @@ class Environment_sosam:
         state = np.log(np.array(state).clip(1))
         return state
 
-    def get_reward(self, used_edge_cpu, task_to_be_offloaded):
+    def get_reward(self, used_edge_cpu, task_to_be_offloaded, silence = True):
         self.quad_Lyapunov_buffer.add(quad_Lyapunov(self.clients[0].queue_list)+quad_Lyapunov(self.servers[0].queue_list))
         quad_drift = self.quad_Lyapunov_buffer.get_drift()
         local_cost = local_energy_consumption(used_edge_cpu)
         server_cost = offload_cost(task_to_be_offloaded)
-        cost = my_rewards(local_cost, server_cost, quad_drift)
-        print("cost = {}".format(cost))
+        cost = my_rewards(local_cost, server_cost, quad_drift)*1e-20
+        if not silence: print("cost = {}".format(cost))
         return cost

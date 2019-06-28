@@ -47,23 +47,25 @@ class TaskQueue(object):
         if new_length <= self.max_length:
             self.tasks[task_id] = task
             self.length = new_length
-            print('task arrival success, queuelength {}'.format(self.length))
+            logger.info('task arrival success, queuelength {}'.format(self.length))
             return True
         else:
-            print('queue exploded, queuelength {}'.format(self.length))
+            logger.info('queue exploded, queuelength {}'.format(self.length))
             return False
             # 뭔가 처리를 해줘야함.. arrive 못받았을 때...
 
     # default는 그냥 자기 cpu로 처리하는 것
     def served(self, resource, type = 1, silence=1):
         # import pdb; pdb.set_trace()
-        print("########### compute or offload : inside of task_queue.served ##########")
+        if not silence: print("########### compute or offload : inside of task_queue.served ##########")
         if resource == 0:
             return
         else:
             task_to_remove = []
             offloaded_tasks = {}
             if type:
+                if np.isnan(resource/applications.app_info[self.app_type]['workload']):
+                    import pdb; pdb.set_trace()
                 to_be_served = int(resource/applications.app_info[self.app_type]['workload'])
                 served_task_bits = 0
                 if not silence: print("data size to be served : {}".format(to_be_served))
@@ -86,8 +88,8 @@ class TaskQueue(object):
                         if not silence: print("remained queue_length of type{} : {}".format(self.app_type, self.length))
                         to_be_served = 0
                     else:
-                        print("no more data to be served remained! {}".format(to_be_served))
-                        print('All tasks are done in task_queue.served(type=1) - computed')
+                        if not silence: print("no more data to be served remained! {}".format(to_be_served))
+                        if not silence: print('All tasks are done in task_queue.served(type=1) - computed')
                         break
                 used_resource = served_task_bits*applications.app_info[self.app_type]['workload']
             else:
@@ -116,7 +118,7 @@ class TaskQueue(object):
                         break
                 used_resource = resource - to_be_offloaded
             self.remove_multiple_tasks(task_to_remove)
-            print("########### task_queue.served ends ###########")
+            if not silence: print("########### task_queue.served ends ###########")
             return used_resource, offloaded_tasks
 
     def past_queue_length(self, t, interval=1):

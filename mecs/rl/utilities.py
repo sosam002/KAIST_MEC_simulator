@@ -1,5 +1,5 @@
 # import tensorflow as tf
-
+import numpy as np
 # 임시로
 def local_energy_consumption(used_cpu, used_tx=0):
     return used_cpu**2+used_tx
@@ -26,7 +26,8 @@ def quad_Lyapunov(queue_list):
 
 # 그럴싸한 coefficient 알아와야 함.
 def my_rewards(local_cost, server_cost, quad_drift, gamma_1=0.9, gamma_2=0.1, gamma_3=0.5, V=3):
-    return V*(gamma_1*local_cost**2 + gamma_2 + gamma_3*server_cost**2) + quad_drift
+    return V*(gamma_1*local_cost**2*1e-30 + gamma_2 + gamma_3*server_cost**2*1e-30) + quad_drift
+
 
 
 class Lyapunov_buffer:
