@@ -105,7 +105,7 @@ class ServerNode(Node):
         channel_rate = self.get_channel_rate(id_to_offload)
         app_type_list = applications.app_type_list()
         # app_type_list = list(self.queue_list.keys())
-        tx_allocs = dict(zip(app_type_list, np.array(beta)*channel_rate))
+        tx_allocs = dict(zip(app_type_list, (np.array(beta)*channel_rate).astype(int)))
         # import pdb; pdb.set_trace()
         tx_allocs = self._probe(tx_allocs, id_to_offload)
         print("## can I offload? tx_allocs bits {} ##".format(tx_allocs))
