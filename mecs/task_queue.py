@@ -55,7 +55,7 @@ class TaskQueue(object):
             # 뭔가 처리를 해줘야함.. arrive 못받았을 때...
 
     # default는 그냥 자기 cpu로 처리하는 것
-    def served(self, resource, type = 1, silence=1):
+    def served(self, resource, type = 1, silence=0):
         # import pdb; pdb.set_trace()
         if not silence: print("########### compute or offload : inside of task_queue.served ##########")
         if resource == 0:
@@ -121,7 +121,7 @@ class TaskQueue(object):
             if not silence: print("########### task_queue.served ends ###########")
             return used_resource, offloaded_tasks
 
-    def past_queue_length(self, t, interval=1):
+    def delta_queue_length(self, t, interval=1):
         result = 0
         for task_id, task_ob in reversed(self.tasks.items()):
             if task_ob.arrival_timestamp > t - interval:

@@ -12,7 +12,7 @@ from servernode_w_queue import ServerNode
 
 from applications import *
 from channels import *
-from rl.utilities import *
+from utilities import *
 from constants import *
 
 logger = logging.getLogger(__name__)
@@ -21,11 +21,10 @@ _parent = pathlib.Path(__file__).parent
 
 class Environment_sosam:
     def __init__(self, task_rate, *applications, time_delta=10*MS):
-        self.task_rate = 10/time_delta
+        self.task_rate = 10#/time_delta
         self.clients = []
         self.servers = []
         self.links = dict()
-        self.quad_Lyapunov_buffer = Lyapunov_buffer()
         self.applications = applications
         self.reset_infos = []
 
@@ -91,12 +90,26 @@ class Environment_sosam:
 
         return
 
+    def Lyap_function(self):
+        lyap = 0
+        for node in self.clients:
+            for app_type, queue_list in node.queue_list.items():
+                lyap += queue_list.length**2
+        for node in self.servers:
+            for app_type, queue_list in node.queue_list.items():
+                lyap += queue_list.length**2
+        return lyap
+
+
     def step(self, action_alpha, action_beta, action_cloud, time, generate_random_task=True, silence =True):
         ######################################################################################## 이게 모조리 step 함수
+        initial_Lyap= self.Lyap_function()
+
         # perform action (simulation)
+        failed_to_generate=0
         if generate_random_task:
             if not silence: print("###### random task generation start! ######")
-            arrival_size = self.clients[0].random_task_generation(self.task_rate, time, *self.applications)
+            arrival_size, failed_to_generate = self.clients[0].random_task_generation(self.task_rate, time, *self.applications)
             if not silence: print("###### random task generation ends! ######")
             # 이건 진짜 arrival rate 이 아님.. arrival만 저장하는걸 또 따로 만들어야 한다니 고통스럽다.
             # print("random task arrival size {}".format(arrival_size))
@@ -111,14 +124,15 @@ class Environment_sosam:
         # print("do task on edge, CPU used {}".format(used_edge_cpu))
         used_tx, task_to_be_offloaded = self.clients[0].offload_tasks(action_beta, self.servers[0].get_uuid())
         # print("offload task to cloud, used_tx {}, offloaded task {}".format(used_tx, task_to_be_offloaded))
-        self.servers[0].offloaded_tasks(task_to_be_offloaded, time)
+        failed_to_offload = self.servers[0].offloaded_tasks(task_to_be_offloaded, time)
         used_cloud_cpu = self.servers[0].do_tasks(action_cloud)
         # print("do task on cloud, CPU used {}".format(used_cloud_cpu))
+        after_Lyap= self.Lyap_function()
 
     ######################################################################################## 이게 모조리 step 함수
 
         state = self.get_status()
-        cost = self.get_reward(used_edge_cpu, task_to_be_offloaded)
+        cost = self.get_reward(used_edge_cpu, task_to_be_offloaded, after_Lyap-initial_Lyap) + 100*(failed_to_offload+failed_to_generate)
 
         return state, -cost
 
@@ -135,11 +149,10 @@ class Environment_sosam:
         state = np.log(np.array(state).clip(1))
         return state
 
-    def get_reward(self, used_edge_cpu, task_to_be_offloaded, silence = True):
-        self.quad_Lyapunov_buffer.add(quad_Lyapunov(self.clients[0].queue_list)+quad_Lyapunov(self.servers[0].queue_list))
-        quad_drift = self.quad_Lyapunov_buffer.get_drift()
+    def get_reward(self, used_edge_cpu, task_to_be_offloaded, quad_drift, silence = True):
         local_cost = local_energy_consumption(used_edge_cpu)
         server_cost = offload_cost(task_to_be_offloaded)
         cost = my_rewards(local_cost, server_cost, quad_drift)*1e-20
+        # import pdb; pdb.set_trace()
         if not silence: print("cost = {}".format(cost))
         return cost

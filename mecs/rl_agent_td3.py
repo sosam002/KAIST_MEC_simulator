@@ -12,7 +12,7 @@ from servernode_w_queue import ServerNode
 
 from applications import *
 from channels import *
-from rl.utilities import *
+from utilities import *
 from constants import *
 import rl.td3 as TD3
 import environment
@@ -24,14 +24,13 @@ def evaluate_policy(env, policy, cloud_policy, eval_episodes=10):
 	for _ in range(eval_episodes):
 		obs = env.reset()
 		done = False
-		print(policy.actor.l1.weight)
-		import pdb; pdb.set_trace()
-
 		for t in range(10000):
 
 			action = policy.select_action(np.array(obs))
 			obs, cost = env.step(action[:len(app_info)], action[len(app_info):], cloud_policy, t)
 			avg_reward -= cost
+		print(policy.actor.l1.weight)
+		import pdb; pdb.set_trace()
 
 	avg_reward /= eval_episodes
 
@@ -107,7 +106,7 @@ def main():
 	channel = WIRED
 	applications = SPEECH_RECOGNITION,NLP, FACE_RECOGNITION, SEARCH_REQ, LANGUAGE_TRANSLATION, PROC_3D_GAME, VR, AR
     ###################
-	env = environment.Environment_sosam(10, *applications)
+	env = environment.Environment_sosam(1e-10, *applications)
 
 	torch.manual_seed(seed)
 	np.random.seed(seed)
@@ -167,7 +166,7 @@ def main():
 			episode_reward = 0
 			episode_timesteps = 0
 			episode_num += 1
-			# import pdb; pdb.set_trace()
+		# import pdb; pdb.set_trace()
 
 		# Select action
 		action = policy.select_action(np.array(obs))

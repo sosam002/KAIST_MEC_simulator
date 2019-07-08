@@ -15,10 +15,10 @@ class Actor(nn.Module):
 	def __init__(self, state_dim, action_dim, max_action):
 		super(Actor, self).__init__()
 
-		self.l1 = nn.Linear(state_dim, action_dim*4)
-		self.l2 = nn.Linear(action_dim*4, action_dim*2)
-		self.l3_alpha = nn.Linear(action_dim*2, int(action_dim*0.5))
-		self.l3_beta = nn.Linear(action_dim*2, int(action_dim*0.5))
+		self.l1 = nn.Linear(state_dim, action_dim*10)
+		self.l2 = nn.Linear(action_dim*10, action_dim*4)
+		self.l3_alpha = nn.Linear(action_dim*4, int(action_dim*0.5))
+		self.l3_beta = nn.Linear(action_dim*4, int(action_dim*0.5))
 
 		self.max_action = max_action
 
@@ -38,14 +38,14 @@ class Critic(nn.Module):
 		super(Critic, self).__init__()
 
 		# Q1 architecture
-		self.l1 = nn.Linear(state_dim + action_dim, action_dim*4)
-		self.l2 = nn.Linear(action_dim*4, action_dim*2)
-		self.l3 = nn.Linear(action_dim*2, 1)
+		self.l1 = nn.Linear(state_dim + action_dim, action_dim*10)
+		self.l2 = nn.Linear(action_dim*10, action_dim*4)
+		self.l3 = nn.Linear(action_dim*4, 1)
 
 		# Q2 architecture
-		self.l4 = nn.Linear(state_dim + action_dim, action_dim*4)
-		self.l5 = nn.Linear(action_dim*4, action_dim*2)
-		self.l6 = nn.Linear(action_dim*2, 1)
+		self.l4 = nn.Linear(state_dim + action_dim, action_dim*10)
+		self.l5 = nn.Linear(action_dim*10, action_dim*4)
+		self.l6 = nn.Linear(action_dim*4, 1)
 
 
 	def forward(self, x, u):

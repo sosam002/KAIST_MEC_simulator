@@ -1,8 +1,9 @@
 # import tensorflow as tf
 import numpy as np
+from constants import *
 # 임시로
 def local_energy_consumption(used_cpu, used_tx=0):
-    return used_cpu**2+used_tx
+    return used_cpu**2 #+used_tx
 
 def offload_cost(used_tx, workloads):
     used_cpu = np.array(used_tx)*np.array(workloads)
@@ -26,12 +27,12 @@ def quad_Lyapunov(queue_list):
 
 # 그럴싸한 coefficient 알아와야 함.
 def my_rewards(local_cost, server_cost, quad_drift, gamma_1=0.9, gamma_2=0.1, gamma_3=0.5, V=3):
-    return V*(gamma_1*local_cost**2*1e-30 + gamma_2 + gamma_3*server_cost**2*1e-30) + quad_drift
+    return V*(gamma_1*local_cost/GHZ + gamma_2 + gamma_3*server_cost/GHZ) + quad_drift/MB
 
 
 
 class Lyapunov_buffer:
-    def __init__(self, max_size=2, initial_storage=0):
+    def __init__(self, max_size=10, initial_storage=0):
         # super.__init__(max_size)
         self.storage = [initial_storage]
 
@@ -53,7 +54,7 @@ class Lyapunov_buffer:
         return self.storage[-1]-self.storage[0]
 
     def get_drift(self):
-        return self.storage[-1]-self.storage[-2]
+        return np.array(self.storage[-1])**2-self.storage[-2]
 
     def get_buffer(self):
         return self.storage
