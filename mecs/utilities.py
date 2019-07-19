@@ -26,15 +26,23 @@ def quad_Lyapunov(queue_list):
     return sum
 
 # 그럴싸한 coefficient 알아와야 함.
-def my_rewards(local_cost, server_cost, quad_drift, gamma_1=0.9, gamma_2=0.1, gamma_3=0.5, V=3):
-    return V*(gamma_1*local_cost/GHZ + gamma_2 + gamma_3*server_cost/GHZ) + quad_drift/MB
+def my_cost(local_cost, server_cost, quad_drift, gamma_1=0.9, gamma_2=0.0, gamma_3=0.5, V=0, W=1):
+
+    cost =V*(gamma_1*local_cost + gamma_2 + gamma_3*server_cost) + W*quad_drift
+    if quad_drift<0:
+        # import pdb; pdb.set_trace()
+        print(cost)
+
+    # if reward>10:
+    #     return 10
+    return cost
 
 
 
 class Lyapunov_buffer:
-    def __init__(self, max_size=10, initial_storage=0):
+    def __init__(self, max_size=10):#, initial_storage=0):
         # super.__init__(max_size)
-        self.storage = [initial_storage]
+        self.storage = []
 
         # if initial_storage is None:
         #     self.storage = []
@@ -49,15 +57,13 @@ class Lyapunov_buffer:
         else:
             pass
 
-    # 참 트루..?
-    def get_avg_drift(self):
-        return self.storage[-1]-self.storage[0]
-
-    def get_drift(self):
-        return np.array(self.storage[-1])**2-self.storage[-2]
-
     def get_buffer(self):
         return self.storage
+
+    def last_storage(self):
+        if self.storage:
+            return self.storage[-1]
+        return (-1,0)
 
 
 class ReplayBuffer(object):

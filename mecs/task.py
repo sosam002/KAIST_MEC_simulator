@@ -19,6 +19,9 @@ class Task(object):
         self.start_timestamp = None # 혹시 몰라서. task별 waiting time 필요할 수도 있음.
         self.end_timestamp = None # 마찬가지.
 
+    # def __del__(self):
+    #     print("deleted")
+
     def get_uuid(self):
         return self.uuid.hex
 
@@ -38,6 +41,9 @@ class Task(object):
 
     def set_arrival_time(self, arrival_timestamp):
         self.arrival_timestamp = arrival_timestamp
+
+    def get_arrival_time(self):
+        return self.arrival_timestamp
 
     def is_client_index(self):
         return bool(self.client_index)

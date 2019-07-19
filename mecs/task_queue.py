@@ -7,17 +7,30 @@ import numpy as np
 import applications
 # from mecs.task import Task
 from task import *
+from utilities import *
+from constants import *
 
 logger = logging.getLogger(__name__)
 
 class TaskQueue(object):
 
-    def __init__(self, app_type, max_length=9999999999999):
+    def __init__(self, app_type, max_length=100000000*BYTE):
         self.uuid = uuid.uuid4()
         self.max_length = max_length
         self.tasks = collections.OrderedDict()
         self.length = 0
         self.app_type = app_type
+        self.arrival_size_buffer = Lyapunov_buffer(max_size=100)
+        self.exploded = 0
+
+    def __del__(self):
+        if len(self.tasks):
+            ids = list(self.tasks.keys())
+            for id in ids:
+                del self.tasks[id]
+        self.length=0
+        del self.arrival_size_buffer
+        del self
 
     def task_ready(self, task_id):
         self.tasks[task_id].is_start = True
@@ -38,25 +51,27 @@ class TaskQueue(object):
 
     # task 객체를 받음
     # offloaded_tasks에서 받음. random_task_generation에서도 받음.
-    def arrived(self, task):
+    def arrived(self, task, arrival_timestamp):
         task_id = task.get_uuid()
         task_length = task.data_size
-        # import pdb; pdb.set_trace()
+        self.arrival_size_buffer.add((arrival_timestamp, task_length))
         new_length = self.length + task_length
-        # import pdb; pdb.set_trace()
         if new_length <= self.max_length:
             self.tasks[task_id] = task
             self.length = new_length
-            logger.info('task arrival success, queuelength {}'.format(self.length))
+            # logger.info('task arrival success, queuelength {}'.format(self.length))
+            self.exploded = max(0, self.exploded-1)
             return True
         else:
-            logger.info('queue exploded, queuelength {}'.format(self.length))
+            logger.info('queue exploded, app type {}, queuelength {}'.format(self.app_type, self.length))
+            del task
+            self.exploded += 1
             return False
             # 뭔가 처리를 해줘야함.. arrive 못받았을 때...
 
-    # default는 그냥 자기 cpu로 처리하는 것
-    def served(self, resource, type = 1, silence=0):
-        # import pdb; pdb.set_trace()
+    # default(type=1)는 그냥 자기 cpu로 처리하는 것
+    def served(self, resource, type = 1, silence=True):
+
         if not silence: print("########### compute or offload : inside of task_queue.served ##########")
         if resource == 0:
             return
@@ -121,14 +136,29 @@ class TaskQueue(object):
             if not silence: print("########### task_queue.served ends ###########")
             return used_resource, offloaded_tasks
 
-    def delta_queue_length(self, t, interval=1):
+    def mean_arrival(self, t, interval=10, normalize=100):
+        # import pdb; pdb.set_trace()
         result = 0
-        for task_id, task_ob in reversed(self.tasks.items()):
-            if task_ob.arrival_timestamp > t - interval:
-                result += task_ob.data_size
+        for time, data_size in self.arrival_size_buffer.get_buffer():
+            if time > t - interval:
+                result += data_size
             else:
                 break
-        return self.length - result
+        if not normalize:
+            return result/min(t+1,interval)
+        else:
+            return result/min(t+1,interval)/self.max_length*normalize
+
+    def last_arrival(self, t, normalize=100):
+        time, arrival_size = self.arrival_size_buffer.last_storage()
+        if time==t:
+            if not normalize:
+                return arrival_size
+            else:
+                return arrival_size/self.max_length*normalize
+        else:
+            return 0
+
 
     @abstractmethod
     def print_me(self):
@@ -137,8 +167,19 @@ class TaskQueue(object):
     def get_uuid(self):
         return self.uuid.hex
 
-    def get_status(self):
-        return self.tasks, self.is_unstable
+    def get_length(self, normalize=100):
+        if not normalize:
+            return self.length
+        else:
+            return self.length/self.max_length*normalize
 
-    def is_unstable(self):
-        return self.is_unstable
+    def get_status(self):
+        return self.tasks, self.exploded
+
+    def get_max(self):
+        return self.max_length
+
+    def is_exploded(self):
+        # if self.exploded ==True:
+        #     import pdb; pdb.set_trace()
+        return self.exploded

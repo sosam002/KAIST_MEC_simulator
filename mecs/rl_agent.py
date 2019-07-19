@@ -12,7 +12,7 @@ from servernode_w_queue import ServerNode
 
 from applications import *
 from channels import *
-from rl.utilities import *
+from utilities import *
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ def main():
 
         # used_tx, task_to_be_offloaded = edge_server.do_and_offload( alpha, beta, cloud_server.get_uuid() )
         # print("used_edge_cpu {}, used_tx {}, used_cloud_cpu {}".format(used_edge_cpu, used_tx, used_cloud_cpu))
-        # import pdb; pdb.set_trace()
+        
         '''
         used_cpu랑 offload 정보 받아서 reward 받는 자리
         '''
@@ -106,7 +106,7 @@ def main():
 
         # get reward
         quad_Lyapunov_buffer.add(quad_Lyapunov(edge_server.queue_list)+quad_Lyapunov(cloud_server.queue_list))
-        # import pdb; pdb.set_trace()
+        
         quad_drift = quad_Lyapunov_buffer.get_drift()
         local_cost = local_energy_consumption(used_edge_cpu)
         server_cost = offload_cost(task_to_be_offloaded)
