@@ -3,17 +3,17 @@ from constants import *
 
 app_info={
     SPEECH_RECOGNITION : {'workload':10435,
-        'popularity': 1,
+        'popularity': 4,
         'min_bits':8000*BYTE,
-        'max_bits':60000*BYTE
+        'max_bits':40000*BYTE
     },NLP : {'workload':25346,
-        'popularity': 1,
+        'popularity': 4,
         'min_bits':8000*BYTE,
-        'max_bits':60000*BYTE
+        'max_bits':40000*BYTE
     },FACE_RECOGNITION : {'workload':45043,
-        'popularity': 1,
+        'popularity': 3,
         'min_bits':8000*BYTE,
-        'max_bits':60000*BYTE
+        'max_bits':40000*BYTE
     },SEARCH_REQ : {'workload':8405,
         'popularity': 0.125,
         'min_bits':800*BYTE,

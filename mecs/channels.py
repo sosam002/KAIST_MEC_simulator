@@ -15,7 +15,7 @@ channel_info = {
     },NFC : {'bw': [],
         'rate': 212*KBPS
     },WIRED : {'bw': [],
-        'rate': 10*GBPS
+        'rate': 5*GBPS
     }
 }
 

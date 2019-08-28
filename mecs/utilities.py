@@ -5,9 +5,9 @@ from constants import *
 def local_energy_consumption(used_cpu, used_tx=0):
     return used_cpu**2 #+used_tx
 
-def offload_cost(used_tx, workloads):
-    used_cpu = np.array(used_tx)*np.array(workloads)
-    return used_cpu**2
+# def offload_cost(used_tx, workloads):
+#     used_cpu = np.array(used_tx)*np.array(workloads)
+#     return used_cpu**2
 
 def offload_cost(task_to_be_offloaded):
     used_cpu = 0
@@ -29,13 +29,20 @@ def quad_Lyapunov(queue_list):
 def my_cost(local_cost, server_cost, quad_drift, gamma_1=0.9, gamma_2=0.0, gamma_3=0.5, V=0, W=1):
 
     cost =V*(gamma_1*local_cost + gamma_2 + gamma_3*server_cost) + W*quad_drift
-    if quad_drift<0:
-        # import pdb; pdb.set_trace()
-        print(cost)
 
     # if reward>10:
     #     return 10
     return cost
+
+def disc_actions(num_apptype, space=0.1):
+    from itertools import product
+    x = np.arange(0,1+space, space)
+    action_set = []
+    for elem in list(product(x,repeat=num_apptype)):
+        if sum(elem)==1:
+            action_set.append(elem)
+
+    return action_set
 
 
 
@@ -92,6 +99,7 @@ class ReplayBuffer(object):
 			d.append(np.array(D, copy=False))
 
 		return np.array(x), np.array(y), np.array(u), np.array(r).reshape(-1, 1), np.array(d).reshape(-1, 1)
+
 
 # class Buffer(object):
 # 	def __init__(self, max_size=100):

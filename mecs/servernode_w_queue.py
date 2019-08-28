@@ -20,9 +20,6 @@ class ServerNode(Node):
         # self.y = y
         # 연결된 uuid와 그와 통신하는 protocol과 그 해당하는 rate?이 필요함..protocol에 포함될수도.
         self.links_to_lower = {} # 하위 device와 통신
-        # 연결된 uuid와 그와 통신하는 protocol과 그 해당하는 rate?이 필요함..protocol에 포함될수도.
-        # self.links_to_higher = {} # 상위 device와 통신
-        # 일단은 그냥 BW 써놨음..ㅠㅠ
         self.links_to_higher = {} # 상위 device와 통신
         self.uuid = uuid.uuid4()
         self.mobility = False
@@ -31,31 +28,12 @@ class ServerNode(Node):
         self.number_of_applications = 0
         self.queue_list = {} # 어플마다 각자의 큐가 필요함.
         self.is_random_task_generating = is_random_task_generating
-        # self.arrival_size_buffer = Lyapunov_buffer(max_size=100, initial_storage=None)
 
     def __del__(self):
         iter = list(self.queue_list.keys())
         for app_type in iter:
             del self.queue_list[app_type]
         del self
-    # # default는 오프로드할 상위 링크를 연결하는 것
-    # def add_link(self, link_to, channel, type=0):
-    #     if type: # 내가 상위링크
-    #         upper = self
-    #         lower = link_to
-    #     else: # 내가 하위링크
-    #         upper = link_to
-    #         lower = self
-    #
-    #     lower.links_to_higher[upper.get_uuid()] = {
-    #         'node' : upper,
-    #         'channel' : channel
-    #     }
-    #     upper.links_to_lower[lower.get_uuid()] = {
-    #         'node' : lower,
-    #         'channel' : channel
-    #     }
-    #     return
 
     def make_application_queues(self, *application_types):
         for application_type in application_types:
@@ -75,53 +53,47 @@ class ServerNode(Node):
             else:
                 # print("### do_task for app_type{} ###".format(app_type))
                 my_task_queue = self.queue_list[app_type]
-                if my_task_queue.length:
+                if my_task_queue.get_length(None):
                     cpu_allocs[app_type], _ = my_task_queue.served(cpu_allocs[app_type]*self.computation_capability, type=1)
                 else:
                     cpu_allocs[app_type]=0
+
         # return alpha, served_bits, my_task_queue
         return sum(cpu_allocs.values())
 
-
+    # id_to_offload로 오프로드할 bits_to_be_arrived(data bit list)를 받아서, each app. queue에 받을만한 공간이 있는지 확인
+    # {받을 수 있으면 bit그대로, 아니면 0}, {오프로드 실패했는지 bool}
     def _probe(self, bits_to_be_arrived, id_to_offload):
 
         node_to_offload = self.links_to_higher[id_to_offload]['node']
         failed = {}
         for app_type, bits in bits_to_be_arrived.items():
             if (app_type in self.queue_list.keys()):
-                node_app_queue = node_to_offload.queue_list[app_type]
-                if node_app_queue.max_length < node_app_queue.length + bits:
-                    bits_to_be_arrived[app_type] = 0
-                    failed[app_type] = True
-                else:
-                    failed[app_type] = False
+                bits_to_be_arrived[app_type], failed[app_type] = node_to_offload.probed(app_type, bits)
+                # node_app_queue = node_to_offload.queue_list[app_type]
+                # # if node_app_queue.max_length < node_app_queue.length + bits:
+                # #     bits_to_be_arrived[app_type] = 0
+                # #     failed[app_type] = True
+                # # else:
+                # #     failed[app_type] = False
         return bits_to_be_arrived, failed
 
+    def probed(self, app_type, bits_to_be_arrived):
+        if self.queue_list[app_type]:
+            if self.queue_list[app_type].get_max() < self.queue_list[app_type].get_length(normalize=None)+bits_to_be_arrived:
+                return (0, True)
+            else:
+                return (bits_to_be_arrived, False)
+        return (0, True)
 
-    '''
-    def _amount_of_offload_to(self, policy):
-        ids_to_offload, amount_of_offload = policy
-        return dict(zip(ids_to_offload, amount_to_offload))
-    '''
-
-    def get_queue_lengths(self):
-        lengths = np.zeros(len(self.queue_list))
-        for app_type, queue in self.queue_list.items():
-            lengths[app_type-1]=queue.get_length()
-        return lengths
-
-    def get_channel_rate(self, id_to_offload):
-        return get_channel_info(self.links_to_higher[id_to_offload]['channel'])
-
-    # 모든 application에 대한 액션 alpha, 실제 활용한 총 cpu 비율 return
+    # 모든 application에 대한 액션 beta, id_to_offload로 offload함.  (_probe로 가능한 action으로 바꿔서)
     def offload_tasks(self, beta, id_to_offload):
-        # 문제가 좀 있음.. channel.py에 channel을 좀 손봐야 함
-
         channel_rate = self.get_channel_rate(id_to_offload)
         # app_type_list = applications.app_type_list()
         app_type_list = list(self.queue_list.keys())
         lengths = self.get_queue_lengths()
         # tx_allocs = dict(zip(app_type_list, (np.array(beta)*channel_rate).astype(int)))
+        # 지금 있는 task보다 더 맡길 수는 없지..
         tx_allocs = dict(zip(app_type_list, np.minimum(lengths,np.array(beta)*channel_rate).astype(int)))
         tx_allocs, failed = self._probe(tx_allocs, id_to_offload)
         # print("## can I offload? tx_allocs bits {} ##".format(tx_allocs))
@@ -139,22 +111,15 @@ class ServerNode(Node):
         # return alpha, served_bits, my_task_queue
         return sum(tx_allocs.values()), task_to_be_offloaded, failed
 
-        '''
-        task to be offloaded 문제임
-        node마다 태스크 큐 만들면서 새로 태스크를 만들어야 하는데, client, server만 알면 되는 게아님
-        task id가 넘어가야 하는데 그게 offload 어떻게 연결되지?
-        task에 parents id랑 child id남_
-        '''
-
     # _probe에서 받을 수 있는 것만 받기때문에 arrived에서 또 넘치는 걸 체크할 필요 없네.
     def offloaded_tasks(self, tasks, arrival_timestamp):
         failed_to_offload = 0
         for task_id, task_ob in tasks.items():
             task_ob.client_index = task_ob.server_index
             task_ob.server_index = self.get_uuid()
-            task_ob.set_arrival_time = arrival_timestamp
+            task_ob.set_arrival_time(arrival_timestamp)
             failed_to_offload += (not self.queue_list[task_ob.application_type].arrived(task_ob, arrival_timestamp))
-            self.queue_list[task_ob.application_type].arrived(task_ob, arrival_timestamp)
+            # self.queue_list[task_ob.application_type].arrived(task_ob, arrival_timestamp)
             # if not self.queue_list[task_ob.application_type].arrived(task_ob):
             #     print("queue exploded queue exploded i'm an 'offloaded_tasks'")
             #     is_exploded.append(True)
@@ -202,30 +167,27 @@ class ServerNode(Node):
                     'Task %s of %d/%d for %d, not ready',
                     index, task.computation_over, task.data_size,
                     task.client_index)
-    #
-    # def estimate_arrival_rate(self, time, interval=100):
-    #     result = np.zeros(len(applications.app_info))
-    #     for app_type, queue in self.queue_list.items():
-    #         result[app_type-1] = queue.mean_arrival(time, interval=interval)
-    #
-    #     # buffer = np.array(self.arrival_size_buffer.get_buffer())
-    #     # if buffer.all()==None:
-    #     #     return np.zeros(len(applications.app_info))
-    #     # return np.mean(buffer, axis=0)
-    #     return result
+
+    def get_higher_node_ids(self):
+        return list(self.links_to_higher.keys())
+
+    def get_queue_list(self):
+        return self.queue_list.items()
+
+    # 이 return값은 딱 이 node queue_list만큼의 길이임.
+    def get_queue_lengths(self):
+        lengths = np.zeros(len(self.queue_list))
+        for app_type, queue in self.queue_list.items():
+            lengths[app_type-1]=queue.get_length(normalize=None)
+        return lengths
+
+    def get_channel_rate(self, id_to_offload):
+        return get_channel_info(self.links_to_higher[id_to_offload]['channel'])
+
+    def get_applications(self):
+        return list(self.queue_list.keys())
 
     def get_status(self, time, estimate_interval=100, involve_capability=0):
-        # TODO : list to JSON?
-        # val = {
-        #     'x': self.x, 'y': self.y,
-        #     'uuid': self.uuid,
-        #     'channels': self.channels,
-        #     'node_type': self.node_type,
-        #     'tasks': self.tasks,
-        #     'computation_capability': self.computation_capability
-        # }
-
-        # 앱 개수만큼 리스트
         queue_estimated_arrivals = np.zeros(8)
         queue_arrivals = np.zeros(8)
         queue_lengths = np.zeros(8)
