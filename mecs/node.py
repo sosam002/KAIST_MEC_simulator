@@ -17,8 +17,9 @@ class Node(metaclass=ABCMeta):
 
     @abstractmethod
     def get_status(self):
+        pass
         # TODO: @Sangdon
         # An abstract method should not be implemented.
         # Please remove this implementation or @abstractmethod
-        val = dict(x=self.x, y=self.y, node_type=self.node_type)
-        return val
+        # val = dict(x=self.x, y=self.y, node_type=self.node_type)
+        # return val
