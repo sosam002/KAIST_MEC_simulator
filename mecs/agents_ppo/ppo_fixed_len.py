@@ -3,6 +3,8 @@ import pathlib
 _parent = str(pathlib.Path(os.getcwd()).parent)
 sys.path.append(_parent)
 import torch
+import argparse
+import json
 import numpy as np
 from datetime import datetime
 from servernode_w_queue import ServerNode
@@ -10,7 +12,7 @@ from applications import *
 from channels import *
 from utilities import *
 from constants import *
-import environment3_ppo as environment
+import environment_ppo as environment
 import pickle
 from rl.ppo.ppo_fixed_len import PPO
 from rl.ppo.ppo_utils import *
@@ -18,49 +20,77 @@ from rl.ppo.ppo_utils import *
 
 def main():
 
+    parser = argparse.ArgumentParser()
+    ############## environment parameters ##############
+    parser.add_argument('--edge_capability', default = 3.0*1e2*GHZ, metavar='G', help = "total edge CPU capability", type=int)
+    parser.add_argument('--cloud_capability', default = 2.5*1e2*GHZ, metavar='G', help = "total cloud CPU capability", type=int)  # clock per tick
+    parser.add_argument('--channel', default = WIRED, metavar='G')
+    parser.add_argument('--applications', default = (SPEECH_RECOGNITION, NLP, FACE_RECOGNITION), metavar='G')#, SEARCH_REQ, LANGUAGE_TRANSLATION, PROC_3D_GAME, VR, AR
+    parser.add_argument('--use_beta', action = 'store_true', help = "use 'offload' to cloud")
+    parser.add_argument('--silence', action = 'store_true', help= "shush environment messages")
+
+
+    ############## Hyperparameters ##############
+    parser.add_argument('--log_interval', default = 20 , metavar='N', help="print avg reward in the interval", type=int)
+    parser.add_argument('--max_episodes', default = 1000, metavar='N', help="max training episodes", type=int)
+    parser.add_argument('--max_timesteps', default = 2000, metavar='N', help="max timesteps in one episode", type=int)
+
+    parser.add_argument('--update_timestep', default = 1000, metavar='N', help="update policy every n timesteps", type=int)
+    parser.add_argument('--action_std', default = 0.5 , metavar='N', help="constant std for action distribution (Multivariate Normal)", type=float)
+    parser.add_argument('--K_epochs', default = 80  , metavar='N', help="update policy for K epochs")
+    parser.add_argument('--eps_clip', default = 0.2 , metavar='N', help="clip parameter for PPO", type=float)
+    parser.add_argument('--gamma', default = 0.9   , metavar='N', help="discount factor", type=float)
+
+    parser.add_argument('--lr', default = 0.0003 , metavar='N', help="parameters for Adam optimizer", type=float)
+    parser.add_argument('--betas', default = (0.9, 0.999), metavar='N')
+    parser.add_argument('--random_seed', default = None, metavar='N')
+    #############################################
+
+
     ############## save parameters ##############
-    file_name = 'ppo2_fixed_len'+str(datetime.now())
-    result_dir = "./results/{}".format(file_name)
-    model_dir = "./pytorch_models/{}".format(file_name)
+    file_name = 'ppo_fixed_len'+str(datetime.now())
+    result_dir = "./{}/eval_results".format(file_name)
+    model_dir = "./{}/pytorch_models".format(file_name)
 
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
+    args = parser.parse_args()
+    args_dict = vars(args)
 
-    ############## environment parameters ##############
+    ############## parser arguments to plain variabales ##############
+    edge_capability = args.edge_capability
+    cloud_capability = args.cloud_capability
+    channel = args.channel
+    applications = args.applications
+    use_beta = args.use_beta
+    silence = args.silence
 
-    # 4번째 탭이 2.5, 2.5 3번째 탭이 3.0 2.5
-    edge_capability = 3.0*1e2*GHZ
-    cloud_capability = 2.5*1e2*GHZ  # clock per tick
-    channel = WIRED
-    applications = SPEECH_RECOGNITION, NLP, FACE_RECOGNITION#, SEARCH_REQ, LANGUAGE_TRANSLATION, PROC_3D_GAME, VR, AR
     number_of_apps = len(applications)
     cloud_policy = [1/number_of_apps]*number_of_apps
-    use_beta = True
-    silence = True
+    args_dict['number_of_apps'] = number_of_apps
+    args_dict['cloud_policy'] = cloud_policy
+
+    log_interval = args.log_interval
+    max_episodes = args.max_episodes
+    max_timesteps = args.max_timesteps
+    update_timestep = args.update_timestep
+    action_std = args.action_std
+    K_epochs = args.K_epochs
+    eps_clip = args.eps_clip
+    gamma = args.gamma
+    lr = args.lr
+    betas = args.betas
+    random_seed = args.random_seed
+    ##################################################################
 
 
-    ############## Hyperparameters ##############
-    render = False
-    # solved_reward = 300         # stop training if avg_reward > solved_reward
-    log_interval = 20           # print avg reward in the interval
-    max_episodes = 10000        # max training episodes
-    max_timesteps = 2000        # max timesteps in one episode
+    with open("./{}/args.json".format(file_name), 'w') as f:
+        json.dump(args_dict, f, indent='\t')
 
-    update_timestep = 1000      # update policy every n timesteps
-    action_std = 0.5            # constant std for action distribution (Multivariate Normal)
-    K_epochs = 80               # update policy for K epochs
-    eps_clip = 0.1              # clip parameter for PPO (3,4번째는 0.2, 다섯번째는 0.1로 줄였음)
-    gamma = 0.9                # discount factor
-
-    lr = 0.0003                 # parameters for Adam optimizer
-    betas = (0.9, 0.999)
-
-    random_seed = None
-    #############################################
-
+    import pdb; pdb.set_trace()
     # creating environment
     env = environment.Environment_sosam(1, *applications, use_beta=use_beta)
     state = env.init_for_sosam(edge_capability, cloud_capability, channel)
@@ -75,14 +105,15 @@ def main():
 
     memory = Memory()
     ppo = PPO(state_dim, action_dim, action_std, lr, betas, gamma, K_epochs, eps_clip)
-    print(lr,betas)
 
     # logging variables
     running_reward = 0
     avg_length = 0
     time_step = 0
+    evaluations_empty_reward = []
     evaluations = []
-    evaluations_fixed_len = []
+    evaluations_empty_reward_1000 = []
+    evaluations_1000 = []
 
     # training loop
     for i_episode in range(1, max_episodes+1):
@@ -105,12 +136,18 @@ def main():
 
             if done:
                 break
-            if t%200==0:
-                print("episode {}, average length {}, running_reward{}".format(i_episode, avg_length, running_reward))
+            # if t%200==0:
+            #     print("episode {}, average length {}, running_reward{}".format(i_episode, avg_length, running_reward))
 
         avg_length += t
-        evaluations.append(evaluate_policy(env, ppo, cloud_policy, memory, epsd_length=max_timesteps))
+        evaluations_empty_reward.append(evaluate_policy(env, ppo, cloud_policy, memory, epsd_length=max_timesteps*2))
+        evaluations.append(evaluate_policy(env, ppo, cloud_policy, memory, epsd_length=max_timesteps*2, empty_reward=False))
+        evaluations_empty_reward_1000.append(evaluate_policy(env, ppo, cloud_policy, memory, epsd_length=1000))
+        evaluations_1000.append(evaluate_policy(env, ppo, cloud_policy, memory, epsd_length=1000, empty_reward=False))
+        np.save("{}/eval_empty_reward".format(result_dir), evaluations_empty_reward)
         np.save("{}/eval".format(result_dir), evaluations)
+        np.save("{}/eval_empty_reward_1000".format(result_dir), evaluations_empty_reward_1000)
+        np.save("{}/eval_1000".format(result_dir), evaluations_1000)
         # stop training if avg_reward > solved_reward
         # if running_reward > (log_interval*solved_reward):
         #     print("########## Solved! ##########")
@@ -118,7 +155,7 @@ def main():
         #     break
 
         # save every 500 episodes
-        if i_episode % 200 == 0:
+        if i_episode % 50 == 0:
             ppo.save('env3_{}_{}'.format(i_episode, t), directory=model_dir)
 
         # logging
