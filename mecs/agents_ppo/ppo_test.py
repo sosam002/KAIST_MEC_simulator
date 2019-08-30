@@ -1,17 +1,15 @@
-import gym
-from ppo3 import PPO, Memory
 from PIL import Image
 import torch
 import os, sys, pathlib
-_parent = pathlib.Path(__file__).parent
+_parent = str(pathlib.Path(os.getcwd()).parent)
 sys.path.append(_parent)
-
+from rl.ppo.ppo_fixed_len import PPO, Memory
 from servernode_w_queue import ServerNode
 from applications import *
 from channels import *
 from utilities import *
 from constants import *
-import environment3_ppo as environment
+import environment_ppo as environment
 import pickle
 
 
@@ -38,8 +36,8 @@ def test():
     # save_gif = False        # png images are saved in gif folder
 
     # filename and directory to load model from
-    filename = "env3_3400_1999_ppo.pth"
-    directory = "pytorch_models/ppo2_fixed_len2019-08-23 14:10:18.157744/"
+    filename = "env3_350_1999_ppo.pth"
+    directory = "pytorch_models/ppo_fixed_len2019-08-29 16:03:13.198024/"
 
     action_std = 0.5        # constant std for action distribution (Multivariate Normal)
     K_epochs = 80           # update policy for K epochs
@@ -67,8 +65,9 @@ def test():
             action = ppo.select_action(state, memory)
             # state, reward, done = env.step(action)
             if t%200==0:
-                state, cost, done = env.step_together(time_step, action, cloud_policy, silence=False)
-            state, cost, done = env.step_together(time_step, action, cloud_policy, silence=silence)
+                state, cost, done = env.step_together(t, action, cloud_policy, silence=False)
+            state, cost, done = env.step_together(t, action, cloud_policy, silence=silence)
+            reward = -cost
             ep_reward += reward
             # if render:
             #     env.render()
@@ -81,7 +80,7 @@ def test():
 
         print('Episode: {}\tReward: {}'.format(ep, int(ep_reward)))
         ep_reward = 0
-        env.close()
+        # env.close()
 
 if __name__ == '__main__':
     test()
