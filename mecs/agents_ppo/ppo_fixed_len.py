@@ -58,8 +58,7 @@ def main():
         os.makedirs(model_dir)
 
     args = parser.parse_args()
-    with open("./{}/args.json".format(file_name), 'w') as f:
-        json.dump(vars(args), f, indent='\t')
+    args_dict = vars(args)
 
     ############## parser arguments to plain variabales ##############
     edge_capability = args.edge_capability
@@ -68,8 +67,11 @@ def main():
     applications = args.applications
     use_beta = args.use_beta
     silence = args.silence
+
     number_of_apps = len(applications)
     cloud_policy = [1/number_of_apps]*number_of_apps
+    args_dict['number_of_apps'] = number_of_apps
+    args_dict['cloud_policy'] = cloud_policy
 
     log_interval = args.log_interval
     max_episodes = args.max_episodes
@@ -84,6 +86,11 @@ def main():
     random_seed = args.random_seed
     ##################################################################
 
+
+    with open("./{}/args.json".format(file_name), 'w') as f:
+        json.dump(args_dict, f, indent='\t')
+
+    import pdb; pdb.set_trace()
     # creating environment
     env = environment.Environment_sosam(1, *applications, use_beta=use_beta)
     state = env.init_for_sosam(edge_capability, cloud_capability, channel)
