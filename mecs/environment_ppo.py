@@ -16,11 +16,8 @@ from channels import *
 from utilities import *
 from constants import *
 
-logger = logging.getLogger(__name__)
-_parent = pathlib.Path(__file__).parent
-
 class Environment_sosam:
-    def __init__(self, task_rate, *applications, time_delta=10*MS, use_beta=False):
+    def __init__(self, task_rate, *applications, time_delta=10*MS, use_beta=False, empty_reward=True):
         self.task_rate = 10#/time_delta
         self.clients = {}
         self.servers = {}
@@ -31,6 +28,7 @@ class Environment_sosam:
         self.action_dim=0
         self.use_beta = use_beta
         self.max_episode_steps = 4000
+        self.empty_reward = empty_reward
 
     def get_number_of_apps(self):
         return len(self.applications)
@@ -44,14 +42,14 @@ class Environment_sosam:
         del self.applications
         del self.reset_infos
 
-    def reset(self):
+    def reset(self, empty_reward=True):
 
         task_rate = self.task_rate
         applications = self.applications
         reset_infos = self.reset_infos
         use_beta = self.use_beta
         self.__del__()
-        self.__init__(task_rate, *applications, use_beta = use_beta)
+        self.__init__(task_rate, *applications, use_beta = use_beta, empty_reward=empty_reward)
         for reset_info in reset_infos:
             self.init_for_sosam(*reset_info)
         reset_state,_,_ = self.get_status(0)
@@ -86,8 +84,6 @@ class Environment_sosam:
 
 
     def init_for_sosam(self, edge_capability, cloud_capability, channel):
-        # 짜증...ㅜㅜ
-
         client = self.add_client(edge_capability)
         client.make_application_queues(*self.applications)
 
@@ -229,11 +225,11 @@ class Environment_sosam:
 
         return np.array(state), failed_to_offload, failed_to_generate
 
-    def get_drift_cost(self, before, after, empty_reward=True):
+    def get_drift_cost(self, before, after):
         drift = after - before
         if drift > 0:
             drift = after
-        if empty_reward:
+        if self.empty_reward:
             if after==0:
                 drift=-1
         return drift

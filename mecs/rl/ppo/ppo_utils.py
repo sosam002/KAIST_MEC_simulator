@@ -1,3 +1,6 @@
+import copy
+import numpy as np
+
 class Memory:
     def __init__(self):
         self.actions = []
@@ -12,41 +15,36 @@ class Memory:
         del self.rewards[:]
 
 
-def evaluate_policy(env, policy, cloud_policy, memory, epsd_length=1000, eval_episodes=10):
+def evaluate_policy(env, policy, cloud_policy, memory, epsd_length=1000, eval_episodes=10, empty_reward=True):
     print("---------------------------------------")
     print("EVALUATION STARTED")
     print("---------------------------------------")
     eval_mem = Memory()
     # import pdb; pdb.set_trace()
-    eval_mem.actions = memory.actions[-epsd_length:]
-    eval_mem.states = memory.states[-epsd_length:]
-    eval_mem.logprobs = memory.logprobs[-epsd_length:]
-    eval_mem.rewards = memory.rewards[-epsd_length:]
-    avg_reward = 0.
+    eval_mem.actions = copy.deepcopy(memory.actions)
+    eval_mem.states = copy.deepcopy(memory.states)
+    eval_mem.logprobs = copy.deepcopy(memory.logprobs)
+    eval_mem.rewards = copy.deepcopy(memory.rewards)
+    avg_rewards = []
     for _ in range(eval_episodes):
-    	obs = env.reset()
-    	done = False
-    	costs=[]
+        avg_reward = 0
+        obs = env.reset(empty_reward)
+        done = False
+        silence=True
+        for t in range(epsd_length):
+            action = policy.select_action(obs, eval_mem)
+            # import pdb; pdb.set_trace()
+            obs, cost, failed = env.step_together(t, np.array(action).reshape(-1,len(action)), cloud_policy, silence=silence)
 
-    	for t in range(epsd_length):
-    		silence=True
-    		if t%200==0:
-    			silence=False
+            avg_reward -= cost
 
-    		action = policy.select_action(obs, eval_mem)
-    		# import pdb; pdb.set_trace()
-    		obs, cost, failed = env.step_together(t, np.array(action).reshape(-1,len(action)), cloud_policy, silence=silence)
-
-    		avg_reward -= cost
-    		costs.append(cost)
-
-    		if failed or t==999:
-    			print("episode length {}".format(t))
-    			break
-
-    avg_reward /= eval_episodes
+            if failed or t==epsd_length-1:
+                avg_rewards.append(avg_reward)
+                print("episode length {}".format(t))
+                break
 
     print("---------------------------------------")
     print("Evaluation over %d episodes: %f" % (eval_episodes, avg_reward))
     print("---------------------------------------")
-    return avg_reward
+    del eval_mem
+    return avg_rewards
