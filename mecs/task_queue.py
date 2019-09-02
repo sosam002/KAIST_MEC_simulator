@@ -132,15 +132,28 @@ class TaskQueue(object):
         else:
             return result/min(t+1,interval)/self.max_length*normalize
 
+    # def last_arrival(self, t, normalize=100):
+    #     time, arrival_size = self.arrival_size_buffer.last_storage()
+    #     if time==t:
+    #         if not normalize:
+    #             return arrival_size
+    #         else:
+    #             return arrival_size/self.max_length*normalize
+    #     else:
+    #         return 0
+
     def last_arrival(self, t, normalize=100):
-        time, arrival_size = self.arrival_size_buffer.last_storage()
-        if time==t:
-            if not normalize:
-                return arrival_size
+        result = 0
+        for time, data_size in self.arrival_size_buffer.get_buffer():
+            if time==t:
+                result += data_size
             else:
-                return arrival_size/self.max_length*normalize
+                break
+        if not normalize:
+            return result
         else:
-            return 0
+            return result/self.max_length*normalize
+
 
 
     @abstractmethod

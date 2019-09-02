@@ -1,6 +1,7 @@
 {
 	"edge_capability": 300000000000.0,
-	"cloud_capability": 250000000000.0,
+	"cloud_capability": 2100000000000.0,
+	"task_rate": 10,
 	"channel": 5,
 	"applications": [
 		1,
@@ -9,6 +10,7 @@
 	],
 	"use_beta": true,
 	"silence": true,
+	"comment": "normal data arrival",
 	"log_interval": 20,
 	"max_episodes": 1000,
 	"max_timesteps": 2000,

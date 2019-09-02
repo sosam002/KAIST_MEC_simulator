@@ -1,0 +1,34 @@
+{
+	"edge_capability": 300000000000.0,
+	"cloud_capability": 2100000000000.0,
+	"task_rate": 10,
+	"channel": 5,
+	"applications": [
+		1,
+		2,
+		3
+	],
+	"use_beta": true,
+	"silence": true,
+	"comment": "computing cost included deterministic arrival",
+	"log_interval": 20,
+	"max_episodes": 1000,
+	"max_timesteps": 2000,
+	"update_timestep": 1000,
+	"action_std": 0.5,
+	"K_epochs": 80,
+	"eps_clip": 0.2,
+	"gamma": 0.9,
+	"lr": 0.0003,
+	"betas": [
+		0.9,
+		0.999
+	],
+	"random_seed": null,
+	"number_of_apps": 3,
+	"cloud_policy": [
+		0.3333333333333333,
+		0.3333333333333333,
+		0.3333333333333333
+	]
+}

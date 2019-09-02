@@ -22,12 +22,15 @@ def main():
 
     parser = argparse.ArgumentParser()
     ############## environment parameters ##############
-    parser.add_argument('--edge_capability', default = 3.0*1e2*GHZ, metavar='G', help = "total edge CPU capability", type=int)
-    parser.add_argument('--cloud_capability', default = 2.5*1e2*GHZ, metavar='G', help = "total cloud CPU capability", type=int)  # clock per tick
+    parser.add_argument('--edge_capability', default = 3*1e2*GHZ, metavar='G', help = "total edge CPU capability", type=int)
+    parser.add_argument('--cloud_capability', default = 2.1*1e3*GHZ, metavar='G', help = "total cloud CPU capability", type=int)  # clock per tick
+    parser.add_argument('--task_rate', default = 10, metavar='G', help = "application arrival task rate")
     parser.add_argument('--channel', default = WIRED, metavar='G')
     parser.add_argument('--applications', default = (SPEECH_RECOGNITION, NLP, FACE_RECOGNITION), metavar='G')#, SEARCH_REQ, LANGUAGE_TRANSLATION, PROC_3D_GAME, VR, AR
     parser.add_argument('--use_beta', action = 'store_true', help = "use 'offload' to cloud")
     parser.add_argument('--silence', action = 'store_true', help= "shush environment messages")
+
+    parser.add_argument('--comment', default=None)
 
 
     ############## Hyperparameters ##############
@@ -49,11 +52,11 @@ def main():
 
     ############## save parameters ##############
     file_name = 'ppo_fixed_len'+str(datetime.now())
-    result_dir = "./{}/eval_results".format(file_name)
-    model_dir = "./{}/pytorch_models".format(file_name)
+    eval_dir = "./results/{}/eval_results".format(file_name)
+    model_dir = "./results/{}/pytorch_models".format(file_name)
 
-    if not os.path.exists(result_dir):
-        os.makedirs(result_dir)
+    if not os.path.exists(eval_dir):
+        os.makedirs(eval_dir)
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
@@ -63,6 +66,7 @@ def main():
     ############## parser arguments to plain variabales ##############
     edge_capability = args.edge_capability
     cloud_capability = args.cloud_capability
+    task_rate = args.task_rate
     channel = args.channel
     applications = args.applications
     use_beta = args.use_beta
@@ -87,12 +91,12 @@ def main():
     ##################################################################
 
 
-    with open("./{}/args.json".format(file_name), 'w') as f:
+    with open("./results/{}/args.json".format(file_name), 'w') as f:
         json.dump(args_dict, f, indent='\t')
 
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     # creating environment
-    env = environment.Environment_sosam(1, *applications, use_beta=use_beta)
+    env = environment.Environment_sosam(task_rate, *applications, use_beta=use_beta)
     state = env.init_for_sosam(edge_capability, cloud_capability, channel)
     state_dim = env.state_dim
     action_dim = env.action_dim
@@ -112,8 +116,8 @@ def main():
     time_step = 0
     evaluations_empty_reward = []
     evaluations = []
-    evaluations_empty_reward_1000 = []
-    evaluations_1000 = []
+    # evaluations_empty_reward_1000 = []
+    # evaluations_1000 = []
 
     # training loop
     for i_episode in range(1, max_episodes+1):
@@ -142,12 +146,12 @@ def main():
         avg_length += t
         evaluations_empty_reward.append(evaluate_policy(env, ppo, cloud_policy, memory, epsd_length=max_timesteps*2))
         evaluations.append(evaluate_policy(env, ppo, cloud_policy, memory, epsd_length=max_timesteps*2, empty_reward=False))
-        evaluations_empty_reward_1000.append(evaluate_policy(env, ppo, cloud_policy, memory, epsd_length=1000))
-        evaluations_1000.append(evaluate_policy(env, ppo, cloud_policy, memory, epsd_length=1000, empty_reward=False))
-        np.save("{}/eval_empty_reward".format(result_dir), evaluations_empty_reward)
-        np.save("{}/eval".format(result_dir), evaluations)
-        np.save("{}/eval_empty_reward_1000".format(result_dir), evaluations_empty_reward_1000)
-        np.save("{}/eval_1000".format(result_dir), evaluations_1000)
+        # evaluations_empty_reward_1000.append(evaluate_policy(env, ppo, cloud_policy, memory, epsd_length=1000))
+        # evaluations_1000.append(evaluate_policy(env, ppo, cloud_policy, memory, epsd_length=1000, empty_reward=False))
+        np.save("{}/eval_empty_reward".format(eval_dir), evaluations_empty_reward)
+        np.save("{}/eval".format(eval_dir), evaluations)
+        # np.save("{}/eval_empty_reward_1000".format(eval_dir), evaluations_empty_reward_1000)
+        # np.save("{}/eval_1000".format(eval_dir), evaluations_1000)
         # stop training if avg_reward > solved_reward
         # if running_reward > (log_interval*solved_reward):
         #     print("########## Solved! ##########")

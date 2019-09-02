@@ -26,13 +26,16 @@ def quad_Lyapunov(queue_list):
     return sum
 
 # 그럴싸한 coefficient 알아와야 함.
-def my_cost(local_cost, server_cost, quad_drift, gamma_1=0.9, gamma_2=0.0, gamma_3=0.5, V=0, W=1):
+def my_cost(local_cost, server_cost, quad_drift, gamma_1=0.5, gamma_2=0.0, gamma_3=0.5, V=1e-10/GHZ/GHZ, W=1):
+    V=0
+    compute_cost = V*(gamma_1*local_cost + gamma_2 + gamma_3*server_cost)
+    drift_cost = W*quad_drift
 
-    cost =V*(gamma_1*local_cost + gamma_2 + gamma_3*server_cost) + W*quad_drift
+    # import pdb; pdb.set_trace()
 
     # if reward>10:
     #     return 10
-    return cost
+    return compute_cost+drift_cost
 
 def disc_actions(num_apptype, space=0.1):
     from itertools import product
@@ -47,7 +50,7 @@ def disc_actions(num_apptype, space=0.1):
 
 
 class Lyapunov_buffer:
-    def __init__(self, max_size=10):#, initial_storage=0):
+    def __init__(self, max_size=100):#, initial_storage=0):
         # super.__init__(max_size)
         self.storage = []
 

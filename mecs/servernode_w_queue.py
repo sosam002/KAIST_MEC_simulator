@@ -43,8 +43,6 @@ class ServerNode(Node):
 
     # 모든 application에 대한 액션 alpha, 실제 활용한 총 cpu 비율 return
     def do_tasks(self, alpha):
-        # app_type_list = applications.app_type_list()
-
         app_type_list = list(self.queue_list.keys())
         cpu_allocs = dict(zip(app_type_list, alpha))
         for app_type in app_type_list:
@@ -70,12 +68,6 @@ class ServerNode(Node):
         for app_type, bits in bits_to_be_arrived.items():
             if (app_type in self.queue_list.keys()):
                 bits_to_be_arrived[app_type], failed[app_type] = node_to_offload.probed(app_type, bits)
-                # node_app_queue = node_to_offload.queue_list[app_type]
-                # # if node_app_queue.max_length < node_app_queue.length + bits:
-                # #     bits_to_be_arrived[app_type] = 0
-                # #     failed[app_type] = True
-                # # else:
-                # #     failed[app_type] = False
         return bits_to_be_arrived, failed
 
     def probed(self, app_type, bits_to_be_arrived):
@@ -152,6 +144,31 @@ class ServerNode(Node):
                 pass
         # self.arrival_size_buffer.add(arrival_size)
         return arrival_size, failed_to_generate
+    #
+    # def random_task_generation(self, task_rate, arrival_timestamp, *app_types):
+    #     app_type_list = applications.app_type_list()
+    #     app_type_pop = applications.app_type_pop()
+    #     this_app_type_list = list(self.queue_list.keys())
+    #     arrival_size = np.zeros(len(app_types))
+    #     failed_to_generate = 0
+    #     for app_type, population in app_type_pop:
+    #         if app_type in this_app_type_list:
+    #             generated_number = np.random.poisson(task_rate*population)
+    #             for i in range(generated_number):
+    #                 data_size = applications.arrival_bits(app_type)
+    #                 if data_size >0:
+    #                     task = Task(app_type, data_size, client_index = uuid.uuid4().hex, server_index = self.get_uuid(), arrival_timestamp=arrival_timestamp)
+    #                     failed_to_generate += (not self.queue_list[app_type].arrived(task, arrival_timestamp))
+    #                     arrival_size[app_type-1] += data_size
+    #                     # print("arrival of app_type{} : {}".format(app_type, data_size))
+    #                 else:
+    #                     pass
+    #                     # print("no arrival of app_type{} occured".format(app_type))
+    #         else:
+    #             pass
+    #     # self.arrival_size_buffer.add(arrival_size)
+    #     return arrival_size, failed_to_generate
+
 
 
     def print_me(self):

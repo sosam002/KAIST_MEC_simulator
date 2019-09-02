@@ -23,6 +23,7 @@ def test():
     ############## environment parameters ##############
     edge_capability = args["edge_capability"]
     cloud_capability =args["cloud_capability"]
+    task_rate = args["task_rate"]
     channel = args["channel"]
     applications = tuple(args["applications"])
     number_of_apps = args["number_of_apps"]
