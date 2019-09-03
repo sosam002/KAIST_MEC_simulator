@@ -75,7 +75,7 @@ class ActorCritic(nn.Module):
         return action_logprobs, torch.squeeze(state_value), dist_entropy
 
 class PPO:
-    def __init__(self, state_dim, action_dim, action_std, lr, betas, gamma, K_epochs, eps_clip):
+    def __init__(self, state_dim, action_dim, action_std, lr, betas, gamma, K_epochs, eps_clip, c1=0.01, c2=1):
         self.lr = lr
         self.betas = betas
         self.gamma = gamma
@@ -88,13 +88,16 @@ class PPO:
 
         self.MseLoss = nn.MSELoss()
 
+        self.c1 = c1
+        self.c2 = c2
+
     def select_action(self, state, memory):
         state = torch.FloatTensor(state.reshape(1, -1)).to(device)
         action = self.policy_old.act(state, memory)
         action = F.softmax(action.reshape(2,-1)/2).cpu().data.numpy().flatten()
         return action
 
-    def update(self, memory):
+    def update(self, memory, c1=0.01, c2=1):
         # Monte Carlo estimate of rewards:
         rewards = []
         discounted_reward = 0
@@ -124,7 +127,7 @@ class PPO:
             surr1 = ratios * advantages
             surr2 = torch.clamp(ratios, 1-self.eps_clip, 1+self.eps_clip) * advantages
             # loss = -torch.min(surr1, surr2) + 0.5*self.MseLoss(state_values, rewards) - 0.01*dist_entropy
-            loss = -torch.min(surr1, surr2) + 0.01*self.MseLoss(state_values, rewards) - dist_entropy
+            loss = -torch.min(surr1, surr2) + self.c1*self.MseLoss(state_values, rewards) - self.c2*dist_entropy
 
             # take gradient step
             self.optimizer.zero_grad()

@@ -3,17 +3,17 @@ from constants import *
 
 app_info={
     SPEECH_RECOGNITION : {'workload':10435,
-        'popularity': 4,
-        'min_bits':8000*BYTE,
-        'max_bits':40000*BYTE
+        'popularity': 5,
+        'min_bits':40000*BYTE,
+        'max_bits':300000*BYTE
     },NLP : {'workload':25346,
-        'popularity': 4,
-        'min_bits':8000*BYTE,
-        'max_bits':40000*BYTE
+        'popularity': 8,
+        'min_bits':4000*BYTE,
+        'max_bits':100000*BYTE
     },FACE_RECOGNITION : {'workload':45043,
-        'popularity': 3,
-        'min_bits':8000*BYTE,
-        'max_bits':40000*BYTE
+        'popularity': 4,
+        'min_bits':10000*BYTE,
+        'max_bits':100000*BYTE
     },SEARCH_REQ : {'workload':8405,
         'popularity': 0.125,
         'min_bits':800*BYTE,
@@ -59,3 +59,14 @@ def arrival_bits(app_type, dist = 'deterministic'):
         return mu
     else:
         return 1
+
+def main():
+    import numpy as np
+    result =[]
+    for i in range(1,9):
+        result.append(app_info[i]['workload']*app_info[i]['popularity']*arrival_bits(i, dist='deterministic'))
+    result = np.array(result)/GHZ
+    import pdb; pdb.set_trace()
+
+if __name__=='__main__':
+    main()

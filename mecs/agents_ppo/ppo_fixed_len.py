@@ -126,7 +126,32 @@ def main():
             time_step +=1
             # Running policy_old:
             action = ppo.select_action(state, memory)
-            state, cost, done = env.step_together(time_step, action, cloud_policy, silence=silence)
+            if t%250==0:
+                print("---------------------------------------")
+                print("estimated arrival: {}".format(state[:8]))
+                print("just arrived: {}".format(state[8:16]))
+                print("queue length: {}".format(state[16:24]))
+                print("queue explosion: {}".format(state[24:32]))
+                if use_beta:
+                    print("c_estimated arrival: {}".format(state[32:40]))
+                    print("c_just arrived: {}".format(state[40:48]))
+                    print("c_queue length: {}".format(state[48:56]))
+                    print("c_queue explosion: {}".format(state[56:]))
+                print("---------------------------------------")
+                print("------action\t{}".format(action))
+                print("---------------------------------------")
+            state, cost, done = env.step_together(t, action, cloud_policy, silence=silence)
+            if t%250==0:
+                print("new_estimated arrival: {}".format(state[:8]))
+                print("new_just arrived: {}".format(state[8:16]))
+                print("new_queue length: {}".format(state[16:24]))
+                print("new_queue explosion: {}".format(state[24:32]))
+                if use_beta:
+                    print("new_c_estimated arrival: {}".format(state[32:40]))
+                    print("new_c_just arrived: {}".format(state[40:48]))
+                    print("new_c_queue length: {}".format(state[48:56]))
+                    print("new_c_queue explosion: {}".format(state[56:]))
+
             reward = -cost
             # Saving reward:
             memory.rewards.append(reward)
@@ -137,7 +162,10 @@ def main():
                 memory.clear_memory()
                 time_step = 0
             running_reward += reward
-
+            if t%250==0:
+                print("---------------------------------------")
+                print("cost:{}, episode reward{}".format(cost, running_reward))
+                print("---------------------------------------")
             if done:
                 break
             # if t%200==0:

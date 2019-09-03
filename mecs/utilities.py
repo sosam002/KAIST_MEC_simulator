@@ -27,7 +27,7 @@ def quad_Lyapunov(queue_list):
 
 # 그럴싸한 coefficient 알아와야 함.
 def my_cost(local_cost, server_cost, quad_drift, gamma_1=0.5, gamma_2=0.0, gamma_3=0.5, V=1e-10/GHZ/GHZ, W=1):
-    V=0
+    # V=0
     compute_cost = V*(gamma_1*local_cost + gamma_2 + gamma_3*server_cost)
     drift_cost = W*quad_drift
 
@@ -68,7 +68,7 @@ class Lyapunov_buffer:
             pass
 
     def get_buffer(self):
-        return self.storage
+        return self.storage[::-1]
 
     def last_storage(self):
         if self.storage:

@@ -18,7 +18,7 @@ from constants import *
 
 class Environment_sosam:
     def __init__(self, task_rate, *applications, time_delta=10*MS, use_beta=False, empty_reward=True):
-        self.task_rate = 10#/time_delta
+        self.task_rate = task_rate#/time_delta
         self.clients = {}
         self.servers = {}
         self.links = collections.OrderedDict()

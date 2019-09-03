@@ -17,7 +17,7 @@ import json
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def test():
-    directory = "ppo_fixed_len2019-08-29 16:03:13.198024"
+    directory = "results/ppo_fixed_len2019-09-02 16:41:42.821829"
     with open("./{}/args.json".format(directory), 'r') as f:
         args = json.load(f)
     ############## environment parameters ##############
@@ -44,10 +44,10 @@ def test():
     #############################################
 
     # filename to load model from
-    model_file = "./{}/pytorch_models/env3_350_1999_ppo.pth".format(directory)
+    model_file = "./{}/pytorch_models/env3_200_1999_ppo.pth".format(directory)
 
     # creating environment
-    env = environment.Environment_sosam(1, *applications, use_beta=use_beta)
+    env = environment.Environment_sosam(task_rate, *applications, use_beta=use_beta)
     state = env.init_for_sosam(edge_capability, cloud_capability, channel)
     state_dim = env.state_dim
     action_dim = env.action_dim
@@ -63,8 +63,36 @@ def test():
             action = ppo.select_action(state, memory)
             # state, reward, done = env.step(action)
             if t%200==0:
-                state, cost, done = env.step_together(t, action, cloud_policy, silence=False)
-            state, cost, done = env.step_together(t, action, cloud_policy, silence=silence)
+                print("---------------------------------------")
+                print("estimated arrival: {}".format(state[:8]))
+                print("just arrived: {}".format(state[8:16]))
+                print("queue length: {}".format(state[16:24]))
+                print("queue explosion: {}".format(state[24:32]))
+                if use_beta:
+                    print("c_estimated arrival: {}".format(state[32:40]))
+                    print("c_just arrived: {}".format(state[40:48]))
+                    print("c_queue length: {}".format(state[48:56]))
+                    print("c_queue explosion: {}".format(state[56:]))
+                print("---------------------------------------")
+                print("------action\t{}".format(action))
+                print("---------------------------------------")
+                import pdb; pdb.set_trace()
+                state, cost, done = env.step_together(t, action, cloud_policy, silence=silence)
+                print("new_estimated arrival: {}".format(state[:8]))
+                print("new_just arrived: {}".format(state[8:16]))
+                print("new_queue length: {}".format(state[16:24]))
+                print("new_queue explosion: {}".format(state[24:32]))
+                if use_beta:
+                    print("new_c_estimated arrival: {}".format(state[32:40]))
+                    print("new_c_just arrived: {}".format(state[40:48]))
+                    print("new_c_queue length: {}".format(state[48:56]))
+                    print("new_c_queue explosion: {}".format(state[56:]))
+                print("---------------------------------------")
+                print("cost:{}, episode reward{}".format(cost, ep_reward))
+                print("---------------------------------------")
+                import pdb; pdb.set_trace()
+            else:
+                state, cost, done = env.step_together(t, action, cloud_policy, silence=silence)
             reward = -cost
             ep_reward += reward
             # if render:
