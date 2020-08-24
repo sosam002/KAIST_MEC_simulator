@@ -43,3 +43,14 @@ arrival data size       Mbps
 time slot interval      sec (TBD)
 Edge computation cap.   3.3*10^2~10^4
 '''
+
+def main():
+    import numpy as np
+    # result =[]
+    # for i in range(1,9):
+    #     result.append(app_info[i]['workload']*app_info[i]['popularity']*arrival_bits(i, dist='deterministic'))
+    # result = np.array(result)/GHZ
+    import pdb; pdb.set_trace()
+
+if __name__=='__main__':
+    main()

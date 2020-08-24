@@ -3,10 +3,10 @@ import copy
 import applications
 
 class Task(object):
-    def __init__(self, application_type, data_size, client_index = None, server_index = None, arrival_timestamp=None):
+    def __init__(self, app_type, data_size, client_index = None, server_index = None, arrival_timestamp=None):
         self.client_index = client_index # 이게 오프로드된 작업이라면 요청한 client가 있지
         self.server_index = server_index # 이게 여기서 오프로드시켰다면 오프로드 시킨 server가 있지.
-        self.application_type = application_type
+        self.app_type = app_type
         self.data_size = data_size
         self.is_start = False
         self.computation_over = 0
@@ -27,6 +27,7 @@ class Task(object):
 
     def make_child_task(self, offload_data_bits):
         new_task = copy.deepcopy(self)
+        new_task.uuid = uuid.uuid4()
         new_task.parent_uuid = self.get_uuid()
         self.child_uuid = new_task.get_uuid()
         new_task.data_size = offload_data_bits
@@ -34,10 +35,10 @@ class Task(object):
         return new_task
 
     def get_workload(self):
-        return applications.app_info[self.application_type]['workload']
+        return applications.app_info[self.app_type]['workload']
 
-    def get_application_type(self):
-        return self.application_type
+    def get_app_type(self):
+        return self.app_type
 
     def get_data_size(self):
         return self.data_size

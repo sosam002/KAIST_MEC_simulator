@@ -25,8 +25,8 @@ class Channel:
                 self.up = 212*KBPS
                 self.down = 212*KBPS
             else: # channel_type==WIRED:
-                self.up = 5*GBPS
-                self.down = 5*GBPS
+                self.up = 0.02*GBPS
+                self.down = 0.02*GBPS
         else:
             self.up = rate[0]
             self.down = rate[1]
