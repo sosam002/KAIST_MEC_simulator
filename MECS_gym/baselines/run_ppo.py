@@ -31,10 +31,10 @@ def common_arg_parser():
     """
     Create an argparse.ArgumentParser for run_mujoco.py.
     """
-    Mujoco_Envs = ['MECS-v1','MECS-v2','MECS-v3','MECS-v4','MECS-v5','MECS-v6','MECS-v7','MECS-v8','MECS-v9']
+    Mujoco_Envs = ['MECS-v0', 'MECS-v1','MECS-v2','MECS-v3','MECS-v4','MECS-v5','MECS-v6','MECS-v7','MECS-v8','MECS-v9']
 
     parser = arg_parser()
-    parser.add_argument('--envn', help='environment ID', type=int, default=5)
+    parser.add_argument('--envn', help='environment ID', type=int, default=0)
     parser.add_argument('--leng', help='ER length', type=int, default=1)
     parser.add_argument('--eps', help='Clipping factor', type=float, default=0.2)
     parser.add_argument('--num_repeat', help='Repeat Number', type=int, default=1)
@@ -254,6 +254,11 @@ def main():
     print("args")
     constants.COST_TYPE = args.cost_type
 
+    register(
+        id='MECS-v0',
+        entry_point='baselines.env_MEC:MEC_v0',
+        max_episode_steps=5000,
+    )
 
     register(
         id='MECS-v1',
