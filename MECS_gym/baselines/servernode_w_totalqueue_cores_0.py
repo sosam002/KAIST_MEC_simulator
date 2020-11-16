@@ -23,7 +23,6 @@ class ServerNode:
         self.location = (np.random.rand(2)*1e6).astype(int)
         self.links_to_lower = {} # 하위 device와 통신
         self.links_to_higher = {} # 상위 device와 통신
-        self.mobility = False
         self.num_cores = num_cores
         self.single_clk = single_clk*GHZ
         self.computational_capability = self.num_cores*self.single_clk  # clocks/tick

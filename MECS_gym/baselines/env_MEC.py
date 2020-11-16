@@ -125,7 +125,6 @@ class MEC_v0(gym.Env):
         cost_type = self.cost_type
         time_stamp = self.timestamp
         self._del()
-        import pdb; pdb.set_trace()
 
         self.__init__(task_rate, applications, use_offload = use_offload, cost_type=cost_type, time_stamp=time_stamp)
         _, failed_to_generate, _ = self._step_generation()
@@ -162,7 +161,6 @@ class MEC_v0(gym.Env):
         ############################### RL network actkon part. ####
         action = np.clip(action,-1.0,1.0)
         action = 10 * action
-        import pdb; pdb.set_trace()
         # 원래 여기 있던 클라우드 씨피유 사용되는 비율이 인포로 들어갔었. 이건 이전 스테이트거 아닌가????
 
         action_alpha, action_beta = list(), list()
