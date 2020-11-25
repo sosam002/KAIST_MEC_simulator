@@ -21,7 +21,7 @@ from gym.utils import seeding
 import time
 
 class MEC_v0(gym.Env):
-    def __init__(self, task_rate=10, applications=(SPEECH_RECOGNITION, NLP, FACE_RECOGNITION), channel = WIRED, use_offload=True, cost_type=COST_TYPE, max_episode_steps=5000, time_stamp=0):
+    def __init__(self, task_rate=10, applications=(SPEECH_RECOGNITION, NLP, FACE_RECOGNITION), channel = WIRED, use_offload=True, offload_type = 'partial', cost_type=COST_TYPE, max_episode_steps=5000, time_stamp=0):
         super().__init__()
 
         self.action_dim= 0
@@ -31,6 +31,7 @@ class MEC_v0(gym.Env):
         self.timestamp = time_stamp
         self.silence = True
 
+        self.offload_type = offload_type
         self.applications = applications
         self.task_rate = task_rate
         self.reset_info = list()
@@ -232,7 +233,7 @@ class MEC_v0(gym.Env):
         for client, beta in list(zip(self.clients.values(), action)):
             higher_nodes = client.get_higher_node_ids()
             for higher_node in higher_nodes:
-                task_to_be_offloaded, failed = client.offload_tasks(beta, higher_node)
+                task_to_be_offloaded, failed = client.offload_tasks(beta, higher_node, self.offload_type)
                 tasks_to_be_offloaded[higher_node].update(task_to_be_offloaded)
         for server_id, server in self.servers.items():
             server.offloaded_tasks(tasks_to_be_offloaded[server_id], self.timestamp)

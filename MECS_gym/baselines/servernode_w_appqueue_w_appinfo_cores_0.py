@@ -107,7 +107,7 @@ class ServerNode:
         return (0, True)
 
     # 모든 application에 대한 액션 beta, id_to_offload로 offload함.  (_probe로 가능한 action으로 바꿔서)
-    def offload_tasks(self, beta, id_to_offload):
+    def offload_tasks(self, beta, id_to_offload, offload_type):
         channel_rate = self.sample_channel_rate(id_to_offload)
         # app_type_list = applications.app_type_list()
         app_type_list = list(self.queue_list.keys())
@@ -126,7 +126,7 @@ class ServerNode:
             else:
                 my_task_queue = self.queue_list[app_type]
                 if my_task_queue.get_length():
-                    tx_allocs[app_type], new_to_be_offloaded = my_task_queue.served(tx_allocs[app_type], type=0)
+                    tx_allocs[app_type], new_to_be_offloaded = my_task_queue.served(tx_allocs[app_type], type=0, offload_type = offload_type)
                     task_to_be_offloaded.update(new_to_be_offloaded)
                 else:
                     tx_allocs[app_type]=0

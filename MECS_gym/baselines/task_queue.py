@@ -102,7 +102,7 @@ class TaskQueue(object):
             # 뭔가 처리를 해줘야함.. arrive 못받았을 때...
 
     # default(type=1)는 그냥 자기 cpu로 처리하는 것, 0이 offload하는 것
-    def served(self, resource, type = 1, silence=True):
+    def served(self, resource, type = 1, offload_type='partial',  silence=True):
         if not silence: print("########### compute or offload : inside of task_queue.served ##########")
         if resource == 0:
             logger.info('No data to be served')
@@ -144,11 +144,14 @@ class TaskQueue(object):
                         task_size -= to_be_served
                         # offloading
                         if not type:
-                            # task_ob data size is adjusted in make_child_task function
-                            new_task = task_ob.make_child_task(to_be_served)
-                            # print("old_task uuid\t", task_id)
-                            # print("new_task uuid\t", new_task.get_uuid())
-                            offloaded_tasks[new_task.get_uuid()] = new_task
+                            if offload_type =="partial"
+                                # task_ob data size is adjusted in make_child_task function
+                                new_task = task_ob.make_child_task(to_be_served)
+                                # print("old_task uuid\t", task_id)
+                                # print("new_task uuid\t", new_task.get_uuid())
+                                offloaded_tasks[new_task.get_uuid()] = new_task
+                            else:
+                                task_size += to_be_served
                         # computation by itself
                         else:
                             self.tasks[task_id].data_size = task_size
