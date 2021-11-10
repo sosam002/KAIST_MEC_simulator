@@ -134,7 +134,7 @@ class ServerNode:
         self.temp_tx_allocs[id_to_offload].update(tx_allocs)
         return task_to_be_offloaded, failed
 
-    # _probe에서 받을 수 있는 것만 받기때문에 arrived에서 또 넘치는 걸 체크할 필요 없네.
+    # _probe에서 받을 수 있는 것만 받기 때문에 여기서는 체크단계 삭제
     def offloaded_tasks(self, tasks, arrival_timestamp):
         failed_to_offload = 0
         for task_id, task_ob in tasks.items():
@@ -142,15 +142,9 @@ class ServerNode:
             task_ob.server_index = self.get_uuid()
             task_ob.set_arrival_time(arrival_timestamp)
             failed_to_offload += (not self.queue_list[task_ob.application_type].arrived(task_ob, arrival_timestamp))
-            # self.queue_list[task_ob.application_type].arrived(task_ob, arrival_timestamp)
-            # if not self.queue_list[task_ob.application_type].arrived(task_ob):
-            #     print("queue exploded queue exploded i'm an 'offloaded_tasks'")
-            #     is_exploded.append(True)
-            # task가 받아지지 않았을 때 role back 해야 하는데 ㅠㅠ
         return failed_to_offload
 
-    # 사실 하위 device에서 offload 받은 task를 전해 받아야 함.
-    # 일단 simulation을 위해 그냥 만들어 놓음. 하..
+    # 일단 simulation을 위한 random task generation
     def random_task_generation(self, task_rate, arrival_timestamp, *app_types):
         app_type_list = applications.app_type_list()
         app_type_pop = applications.app_type_pop()
@@ -242,15 +236,7 @@ class ServerNode:
             app_info[app_type-1] = applications.get_info(app_type, "workload")/KB
             cpu_used[app_type-1] = self.cpu_used[app_type]/self.computational_capability
 
-        # print("asdsad")
-        # print(self.cpu_used)
-        # print(self.computational_capability)
-        # print(queue_lengths)
-        # print(cpu_used)
-            # if queue.is_exploded()>0:
-            #     import pdb; pdb.set_trace()
-            # arrival_rates[queue.app_type-1] = queue.estimate_arrival_rate()
-        # 아 채널 스테이트도 받아와야 하는데 ㅠㅠ 일단 메인에서 받는다
+        # state observation에 channel estimate 포함시키는 옵션 가능
         obs = list(queue_estimated_arrivals)+list(queue_arrivals)+list(queue_lengths)+list(cpu_used)+list(app_info)+list(self.get_req_cpus_offloaded(scale).values())
         if involve_capability:
             obs+=[self.computational_capability/GHZ]
@@ -258,7 +244,4 @@ class ServerNode:
             u_dists, u_rates = self.up_channels_estimate()
             d_dists, d_rates = self.down_channels_estimate()
             obs+=u_dists+u_rates+d_dists+d_rates
-        # return list(queue_estimated_arrivals)+list(queue_arrivals)+list(queue_lengths)+list(cpu_used)+list(app_info)\
-        #     +list(self.get_req_cpus_offloaded(scale).values()) + self.up_channels_estimate() + self.down_channels_estimate()
-        # return list(queue_lengths) + [self.computational_capability/1000000000]
         return obs
