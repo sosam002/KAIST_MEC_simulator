@@ -6,12 +6,13 @@ import uuid
 from baselines.constants import *
 
 class Channel:
-    def __init__(self, channel_type, fading=0, rate=None, op_freq=None):
+    def __init__(self, channel_type, pathloss=False, fading=0, rate=None, op_freq=None):
         self.uuid = uuid.uuid4()
         self.channel_type = channel_type
-        # self.bw = []
-        # self.max_coverage = []
+        self.bw = []
+        self.max_coverage = []
         self.fading = fading
+        self.pathloss = pathloss
         # self.awgn = awgn
 
         if not rate:
@@ -42,7 +43,7 @@ class Channel:
             else: # channel_type==WIRED:
                 self.up = 0.02*GBPS
                 self.down = 0.02*GBPS
-        else:
+        else: # user input
             self.up = rate[0]
             self.down = rate[1]
             self.op_freq = op_freq
@@ -53,16 +54,46 @@ class Channel:
     def get_channel_type(self):
         return self.channel_type
 
-    def get_rate(self, is_up=True, dist=0):
+    def get_rate(self, is_up=True, dist=1, ref_dist=1):
         # noises = 0
         gain = 1
         if is_up:
             mean_rate = self.up
         else:
             mean_rate = self.down
+        
+        if self.pathloss and self.channel_type!=WIRED:
+            # mean_rate += 10*2.1*log10(dist)
+            # https://en.wikipedia.org/wiki/Log-distance_path_loss_model
+            
+            # Building Type	Frequency of Transmission	{\displaystyle \gamma }\gamma 	{\displaystyle \sigma }\sigma  [dB]
+            # Vacuum, infinite space		2.0	0
+            # Retail store	914 MHz	2.2	8.7
+            # Grocery store	914 MHz	1.8	5.2
+            # Office with hard partition	1.5 GHz	3.0	7
+            # Office with soft partition	900 MHz	2.4	9.6
+            # Office with soft partition	1.9 GHz	2.6	14.1
+            # Textile or chemical	1.3 GHz	2.0	3.0
+            # Textile or chemical	4 GHz	2.1	7.0, 9.7
+            # Office	60 GHz	2.2	3.92
+            # Commercial	60 GHz	1.7	7.9
+            
+            # https://en.wikipedia.org/wiki/Free-space_path_loss
+            # m, KHz ; const = -87.55
+            # m, MHz ; const = -27.55
+            # m, Hz ; const = -147.55
+            # km, GHz ; const = 92.45
+            # km, MHz ; 32.44
+
+            const = -147.55 # meter, herz
+            fspl = 20*np.log10(dist)+20*np.log10(self.op_freq)+const
+            gamma = 2 # vacuum
+            
+            gain *= (ref_dist/dist)**gamma *10**(-fspl/10)
 
         if self.fading and self.channel_type!=WIRED:
-            gain *= 1 + standard_normal()*np.sqrt(self.fading)
+            pass
+            # gain *= 1 + standard_normal()*np.sqrt(self.fading)
             # return np.random.rayleigh( np.sqrt(2/np.pi)*mean_rate )
         return mean_rate*gain
 
