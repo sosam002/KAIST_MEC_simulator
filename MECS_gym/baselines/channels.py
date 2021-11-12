@@ -1,19 +1,18 @@
 import numpy as np
-from numpy.random import randn, random, standard_normal
+from numpy.random import randn, random, standard_normal, lognormal
 import matplotlib.pyplot as plt
 import logging
 import uuid
 from baselines.constants import *
 
 class Channel:
-    def __init__(self, channel_type, pathloss=False, fading=0, rate=None, op_freq=None):
+    def __init__(self, channel_type, pathloss=False, lf=False, sf=False, rate=None, op_freq=None):
         self.uuid = uuid.uuid4()
         self.channel_type = channel_type
         self.bw = []
         self.max_coverage = []
-        self.fading = fading
         self.pathloss = pathloss
-        # self.awgn = awgn
+        self.lf = lf # sigma value of exponential distributin in dB in large scale fading (shadow fading)
 
         if not rate:
             if channel_type==LTE:
@@ -87,14 +86,19 @@ class Channel:
 
             const = -147.55 # meter, herz
             fspl = 20*np.log10(dist)+20*np.log10(self.op_freq)+const
-            gamma = 2 # vacuum
-            
+            gamma = 2 # vacuum            
             gain *= (ref_dist/dist)**gamma *10**(-fspl/10)
-
-        if self.fading and self.channel_type!=WIRED:
+            
+            # Large scale fading part(shadow fading)
+            # reference: 3GPP TR 38.901
+            # follows lognormal with sigma 4~8 in dB
+            # let lf value be sigma of the normal distribution
+            lf = lognormal(0, self.lf)
+            gain *= 10**(-lf/10)
+            
+        if self.sf and self.channel_type!=WIRED:
             pass
-            # gain *= 1 + standard_normal()*np.sqrt(self.fading)
-            # return np.random.rayleigh( np.sqrt(2/np.pi)*mean_rate )
+        
         return mean_rate*gain
 
 def main():
