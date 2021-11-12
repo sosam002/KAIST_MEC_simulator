@@ -1,5 +1,7 @@
 import numpy as np
 from numpy.random import randn, random, standard_normal, lognormal
+import scipy
+from scipy import stats
 import matplotlib.pyplot as plt
 import logging
 import uuid
@@ -11,8 +13,9 @@ class Channel:
         self.channel_type = channel_type
         self.bw = []
         self.max_coverage = []
-        self.pathloss = pathloss
+        self.pathloss = pathloss # path loss exponent value (gamma) of the path loss model
         self.lf = lf # sigma value of exponential distributin in dB in large scale fading (shadow fading)
+        self.sf = sf # m value of Nakagami (m=1 becomes Rayleigh) fading of small scale fading (multipath fading)
 
         if not rate:
             if channel_type==LTE:
@@ -61,43 +64,48 @@ class Channel:
         else:
             mean_rate = self.down
         
-        if self.pathloss and self.channel_type!=WIRED:
-            # mean_rate += 10*2.1*log10(dist)
-            # https://en.wikipedia.org/wiki/Log-distance_path_loss_model
+        if self.pathloss and self.channel_type!=WIRED:            
+            # Applicable values references of pathloss and shadowing: 
+            # 3GPP TR 38.901 or https://en.wikipedia.org/wiki/Log-distance_path_loss_model 
             
-            # Building Type	Frequency of Transmission	{\displaystyle \gamma }\gamma 	{\displaystyle \sigma }\sigma  [dB]
-            # Vacuum, infinite space		2.0	0
-            # Retail store	914 MHz	2.2	8.7
-            # Grocery store	914 MHz	1.8	5.2
-            # Office with hard partition	1.5 GHz	3.0	7
-            # Office with soft partition	900 MHz	2.4	9.6
-            # Office with soft partition	1.9 GHz	2.6	14.1
-            # Textile or chemical	1.3 GHz	2.0	3.0
-            # Textile or chemical	4 GHz	2.1	7.0, 9.7
-            # Office	60 GHz	2.2	3.92
-            # Commercial	60 GHz	1.7	7.9
+            # https://en.wikipedia.org/wiki/Log-distance_path_loss_model (pathloss with large scale shadowing)            
+            # Building Type                 Frequency of Transmission	\gamma 	\sigma[dB]
+            # Vacuum, infinite space                                    2.0	    0
+            # Retail store	                914 MHz	                    2.2	    8.7
+            # Grocery store	                914 MHz	                    1.8	    5.2
+            # Office with hard partition	1.5 GHz	                    3.0	    7
+            # Office with soft partition	900 MHz	                    2.4	    9.6
+            # Office with soft partition	1.9 GHz	                    2.6	    14.1
+            # Textile or chemical	        1.3 GHz	                    2.0	    3.0
+            # Textile or chemical	        4 GHz	                    2.1	    7.0, 9.7
+            # Office	                    60 GHz	                    2.2	    3.92
+            # Commercial	                60 GHz	                    1.7	    7.9
             
-            # https://en.wikipedia.org/wiki/Free-space_path_loss
+            # https://en.wikipedia.org/wiki/Free-space_path_loss (free space path loss constant)
             # m, KHz ; const = -87.55
             # m, MHz ; const = -27.55
             # m, Hz ; const = -147.55
             # km, GHz ; const = 92.45
             # km, MHz ; 32.44
 
-            const = -147.55 # meter, herz
-            fspl = 20*np.log10(dist)+20*np.log10(self.op_freq)+const
-            gamma = 2 # vacuum            
-            gain *= (ref_dist/dist)**gamma *10**(-fspl/10)
+            # Pathloss part
+            # let pathloss value be gamma in the pathloss expression (ex. if vacuum, gamma=self.pathloss=2)
+            const = -147.55 # meter, Hz
+            fspl = 20*np.log10(dist)+20*np.log10(self.op_freq)+const         
+            gain *= (ref_dist/dist)**self.pathloss *10**(-fspl/10)
             
             # Large scale fading part(shadow fading)
-            # reference: 3GPP TR 38.901
             # follows lognormal with sigma 4~8 in dB
             # let lf value be sigma of the normal distribution
             lf = lognormal(0, self.lf)
             gain *= 10**(-lf/10)
             
-        if self.sf and self.channel_type!=WIRED:
-            pass
+            # Small scale fading part (multipath fading)
+            if self.sf > 0:
+                # if self.sf == RAYLEIGH:
+                # rayleigh distribution is nakagami distribution with parameter 1
+                # else self.sf>1, return general nakagami rv value
+                gain *= stats.nakagami.rvs(self.sf)
         
         return mean_rate*gain
 
