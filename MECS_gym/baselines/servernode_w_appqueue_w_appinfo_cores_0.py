@@ -4,6 +4,7 @@ import copy
 import numpy as np
 from scipy.stats import uniform
 from scipy.stats import levy
+from scipy.stats import norm
 from scipy.spatial import distance
 
 from baselines.constants import *
@@ -20,7 +21,8 @@ class ServerNode:
         super().__init__()
         # self.map = whole_map
         self.uuid = uuid.uuid4()
-        self.location = (np.random.rand(2)*1e6).astype(int)
+        self.location = (np.random.rand(2)*1e6).astype(float)
+        self.angle = uniform.rvs(loc=.0, scale=2.*np.pi)
 
         # dict ( id of linked node : { 'node' : obj. of the linked node, 'channel' : channel between this node and the linked node } )
         self.links_to_lower = {} # 하위 device와 통신
@@ -42,17 +44,23 @@ class ServerNode:
         for app_type in iter:
             del self.queue_list[app_type]
         del self
-
+        
     def move(self, type = 'levy'):
         if type =='levy':
             # uniformly distributed angles
-            angle = uniform.rvs( size=(n,), loc=.0, scale=2.*np.pi )
-
+            angle = uniform.rvs(loc=.0, scale=2.*np.pi )
             # levy distributed step length
             r = levy.rvs(loc=3, scale=0.5)
             self.location += [r * np.cos(angle), r * np.sin(angle)]
+            self.angle = angle
         else:
-            pass
+            # type == vehicle
+            # toward a normally distributed angle from temporal direction
+            angle = norm.rvs(loc=self.angle, scale=np.pi/12)%(2*np.pi)
+            # levy distributed step length
+            r = levy.rvs(loc=100, scale=10)
+            self.location += [r * np.cos(angle), r * np.sin(angle)]
+            self.angle = angle
 
     def get_dist(self, node):
         return distance.euclidean(self.location, node.location)
