@@ -144,7 +144,7 @@ class TaskQueue(object):
                         task_size -= to_be_served
                         # offloading
                         if not type:
-                            if offload_type =="partial"
+                            if offload_type =="partial":
                                 # task_ob data size is adjusted in make_child_task function
                                 new_task = task_ob.make_child_task(to_be_served)
                                 # print("old_task uuid\t", task_id)
