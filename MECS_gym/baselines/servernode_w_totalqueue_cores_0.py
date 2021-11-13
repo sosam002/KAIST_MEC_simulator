@@ -4,6 +4,7 @@ import copy
 import numpy as np
 from scipy.stats import uniform
 from scipy.stats import levy
+from scipy.stats import norm
 from scipy.spatial import distance
 
 import baselines.applications
@@ -20,7 +21,8 @@ class ServerNode:
     def __init__(self, num_cores=54, single_clk=4, is_random_task_generating=False, movable=False):
         super().__init__()
         self.uuid = uuid.uuid4()
-        self.location = (np.random.rand(2)*1e6).astype(int)
+        self.location = (np.random.rand(2)*1e6).astype(float)
+        self.angle = uniform.rvs(loc=.0, scale=2.*np.pi )
         self.links_to_lower = {} # 하위 device와 통신
         self.links_to_higher = {} # 상위 device와 통신
         self.num_cores = num_cores
@@ -37,13 +39,19 @@ class ServerNode:
     def move(self, type = 'levy'):
         if type =='levy':
             # uniformly distributed angles
-            angle = uniform.rvs( size=(n,), loc=.0, scale=2.*np.pi )
-
+            angle = uniform.rvs(loc=.0, scale=2.*np.pi )
             # levy distributed step length
             r = levy.rvs(loc=3, scale=0.5)
             self.location += [r * np.cos(angle), r * np.sin(angle)]
+            self.angle = angle
         else:
-            pass
+            # type == vehicle
+            # normally distributed angles from temporal direction
+            angle = norm.rvs(loc=self.angle, scale=np.pi/12)%(2*np.pi)
+            # levy distributed step length
+            r = levy.rvs(loc=100, scale=10)
+            self.location += [r * np.cos(angle), r * np.sin(angle)]
+            self.angle = angle
 
     def get_dist(self, node):
         return distance.euclidean(self.location, node.location)
