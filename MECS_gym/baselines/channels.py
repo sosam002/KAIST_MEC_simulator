@@ -8,14 +8,15 @@ import uuid
 from baselines.constants import *
 
 class Channel:
-    def __init__(self, channel_type, pathloss=False, lf=False, sf=False, rate=None, op_freq=None):
+    def __init__(self, channel_type, pathloss=False, lf=False, sf_type=False, sf_factor=0, rate=None, op_freq=None):
         self.uuid = uuid.uuid4()
         self.channel_type = channel_type
         self.bw = []
         self.max_coverage = []
         self.pathloss = pathloss # path loss exponent value (gamma) of the path loss model
         self.lf = lf # sigma value of exponential distributin in dB in large scale fading (shadow fading)
-        self.sf = sf # m value of Nakagami (m=1 becomes Rayleigh) fading of small scale fading (multipath fading)
+        self.sf_type = sf_type # small scale fading type (multipath fading) : RAYLEIGH, RICE, NAKAGAMI
+        self.sf_factor = sf_factor # small scale fading factor, ignore multipath fading if sf_factor=0
 
         if not rate:
             if channel_type==LTE:
@@ -94,18 +95,30 @@ class Channel:
             fspl = 20*np.log10(dist)+20*np.log10(self.op_freq)+const         
             gain *= (ref_dist/dist)**self.pathloss *10**(-fspl/10)
             
-            # Large scale fading part(shadow fading)
-            # follows lognormal with sigma 4~8 in dB
-            # let lf value be sigma of the normal distribution
-            lf = lognormal(0, self.lf)
-            gain *= 10**(-lf/10)
+            if self.lf > 0:
+                # Large scale fading part(shadow fading)
+                # follows lognormal with sigma 4~8 in dB
+                # let lf value be sigma of the normal distribution
+                lf = lognormal(0, self.lf)
+                gain *= 10**(-lf/10)
             
             # Small scale fading part (multipath fading)
-            if self.sf > 0:
-                # if self.sf == RAYLEIGH:
-                # rayleigh distribution is nakagami distribution with parameter 1
-                # else self.sf>1, return general nakagami rv value
-                gain *= stats.nakagami.rvs(self.sf)
+            if self.sf_factor > 0:
+                if self.sf_type == RAYLEIGH:
+                    # sf_factor = noise
+                    gain *= stats.rayleigh.rvs(scale=self.sf_factor)
+
+                elif self.sf_type == RICE:
+                    # default noise
+                    s = 0.5
+                    # sf_factor = LOS factor
+                    gain *= stats.rice.rvs(self.sf_factor/s, scale=s)
+
+                elif self.sf_type == NAKAGAMI:
+                    # sf_factor = m value
+                    gain *= stats.nakagami.rvs(self.sf_factor)
+                else:
+                    pass
         
         return mean_rate*gain
 
