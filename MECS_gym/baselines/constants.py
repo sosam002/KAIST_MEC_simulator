@@ -15,6 +15,8 @@ WIRED = 5
 
 # Fadings
 RAYLEIGH = 1
+RICE = 2
+NAKAGAMI = 3
 
 
 # Applications
