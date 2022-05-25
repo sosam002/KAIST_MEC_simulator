@@ -5,5 +5,4 @@ learning based mobile edge computing simulator
 old version without gym baseline
 
 # /MECS_gym
-setup with setup.py
-execution with python -m baselines.run_ppo --cost_type [cost type]
+
