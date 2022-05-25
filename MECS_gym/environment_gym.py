@@ -5,8 +5,8 @@ from gym.envs.registration import register
 from gym.spaces import Box
 import numpy as np
 
-from servernode_w_appqueue_220523 import ServerNode as ANode
-from servernode_w_totalqueue_220523 import ServerNode as TNode
+from servernode_w_appqueue import ServerNode as ANode
+from servernode_w_totalqueue import ServerNode as TNode
 from channels import Channel
 from constants import GHZ, WIRED
 from cost_functions_cores import get_local_power_cost
