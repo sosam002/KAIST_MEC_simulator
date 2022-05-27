@@ -1,0 +1,819 @@
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,1,0" />
+  </head>
+  <body>
+    <nav class="navbar fixed-top navbar-light" style="background-color: #e3f2fd;">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">Mobile Edge Computing System : Parameters Generator</a>
+      </div>
+    </nav>
+
+    <div class="container bd-layout mecs-top-margin">
+      <main class="bd-main">
+        <div class="accordion" id="accordionExample">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                UI for generating input parameters for a simulation environment and objects(channels and nodes) in it.
+              </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+              <div class="accordion-body">
+                UI for generating input parameters for a simulation environment and objects(channels and nodes) in it.
+              </div>
+            </div>
+          </div>
+        </div>
+        <hr />
+        <h3>▶ Environment Parameters</h3>
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th width=250>
+                Key
+              </th>
+              <th>
+                Value
+              </th>
+            </tr>
+          </thead>
+          <tbody id="input_tbody_env">
+          </tbody>
+        </table>
+        <hr />
+        <h3>▶ Nodes (Total Queue)</h3>
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th width=250>
+                  Node
+                </th>
+                <th width=250>
+                  Key
+                </th>
+                <th>
+                  Value
+                </th>
+              </tr>
+            </thead>
+            <tbody id="input_tbody_node_total_queue">
+            </tbody>
+            <tr>
+              <td colspan=3>
+                <button type="button" id="add_node_total_queue" class="btn btn-outline-primary">노드 추가</button>
+              </td>
+            </tr>
+          </table>
+        <hr />
+        <h3>▶ Nodes (App Queue)</h3>
+        <form id="app_queue_nodes_params">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th width=250>
+                  Node
+                </th>
+                <th width=250>
+                  Key
+                </th>
+                <th>
+                  Value
+                </th>
+              </tr>
+            </thead>
+            <tbody id="input_tbody_node_app_queue">
+            </tbody>
+            <tr>
+              <td colspan=3>
+                <button type="button" id="add_node_app_queue" class="btn btn-outline-primary">노드 추가</button>
+              </td>
+            </tr>
+          </table>
+        </form>
+        <hr />
+        <h3>▶ Channels</h3>
+        <form id="channel_params">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th width=250>
+                  Channel
+                </th>
+                <th width=250>
+                  Key
+                </th>
+                <th>
+                  Value
+                </th>
+              </tr>
+            </thead>
+            <tbody id="input_tbody_channel">
+            </tbody>
+            <tr>
+              <td colspan=3>
+                <button type="button" id="add_channel" class="btn btn-outline-primary">채널 추가</button>
+              </td>
+            </tr>
+          </table>
+        </form>
+        <hr />
+        <h3>▶ Links</h3>
+        <form id="link_params">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th width=250>
+                  Link
+                </th>
+                <th width=250>
+                  Upper Node
+                </th>
+                <th width=250>
+                  Channel
+                </th width=250>
+                <th>
+                  Lower Node
+                </th>
+              </tr>
+            </thead>
+            <tbody id="input_tbody_link">
+            </tbody>
+            <tr>
+              <td colspan=4>
+                <button type="button" id="add_link" class="btn btn-outline-primary">연결 추가</button>
+              </td>
+            </tr>
+          </table>
+        </form>
+      </main>
+      <nav class="navbar fixed-bottom navbar-light bg-light">
+        <div class="container-fluid">
+          <div class='d-flex'>
+            <button id="export_to_json" class="btn btn-outline-success me-2" type="button">Export to JSON</button>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <script  src="http://code.jquery.com/jquery-latest.min.js"></script>
+  </body>
+</html>
+
+<style>
+@font-face {
+    font-family: 'NanumSquareRound';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumSquareRound.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.question-mark {
+  font-size: 18px!important;
+}
+
+.mecs-top-margin {
+    margin-top: 100px!important;
+    margin-bottom: 100px!important;
+}
+
+td {
+  vertical-align: middle;
+}
+
+a {
+  text-decoration: none;
+}
+
+body {
+  font-family: 'NanumSquareRound';
+}
+</style>
+
+<script>
+$(document).ready(function () {
+  var sprintf = (str, ...argv) => !argv.length ? str :
+      sprintf(str = str.replace(sprintf.token||"$", argv.shift()), ...argv);
+
+  /* Data Size Scales */
+  var byte = 8
+  var kb = 1024 * byte
+  var mb = 1024 * kb
+  var gb = 1024 * mb
+  var tb = 1024 * gb
+  var pb = 1024 * tb
+
+  /* CPU Clock Frequency Scales */
+  var khz = 1e3
+  var mhz = khz * 1e3
+  var ghz = ghz * 1e3
+
+  /* Data Transmission Rate Scales */
+  var kbps = 1e3
+  var mbps = kbps * 1e3
+  var gbps = mbps * 1e3
+
+  /* Time Scales */
+  var ms = 1e-3
+
+  /* Selections */
+  var movableSelections =[
+    {'id': 0, 'name': 'Not Movable'},
+    {'id': 1, 'name': 'Levy'},
+    {'id': 2, 'name': 'Vehicle'},
+  ]
+  var offloadTypeSelections = [
+    {'id': false, 'name': 'On/Off'},
+    {'id': true, 'name': 'Partial'},
+  ]
+  var applicationsSelections = [
+    {'id': 0, 'name': 'dummy for index 0', 'show': false},
+    {'id': 1, 'name': 'Speech Recognition'},
+    {'id': 2, 'name': 'NLP'},
+    {'id': 3, 'name': 'Face Recognition'},
+    {'id': 4, 'name': 'Search Request'},
+    {'id': 5, 'name': 'Language Translation'},
+    {'id': 6, 'name': 'Proc 3D Game'},
+    {'id': 7, 'name': 'VR'},
+    {'id': 8, 'name': 'AR'},
+  ]
+
+  var channelSelections = [
+    {'id': 0, 'name': 'dummy for index 0', 'show': false},
+    {'id': 1, 'name': 'LTE', 'up': 75 * mbps, 'down': 300 * mbps},
+    {'id': 2, 'name': 'WIFI', 'up': 135 * mbps, 'down': 135 * mbps},
+    {'id': 3, 'name': 'Bluetooth', 'up': 22 * mbps, 'down': 22 * mbps},
+    {'id': 4, 'name': 'NFC', 'up': 212 * kbps, 'down': 212 * kbps},
+    {'id': 5, 'name': 'WIRED', 'up': 0.02 * gbps, 'down': 0.02 * gbps},
+    {'id': 6, 'name': 'Custom Setting'},
+  ]
+
+  var sfTypeSelections = [
+    {'id': 0, 'name': 'False'},
+    {'id': 1, 'name': 'RAYLEIGH'},
+    {'id': 2, 'name': 'RICE'},
+    {'id': 3, 'name': 'NAKAGAMI'},
+  ]
+  /* End of Selections */
+
+  /* Table Fields */
+  var environmentParameters = [
+    {'id': 'task_rate', 'name': 'Task Rate', 'help': "Total task arrival rate", 'default': 1},
+    {'id': 'cost_type', 'name': 'Reward Type', 'help': "For testing many reward types. You can design reward function with this parameter", 'default': 1},
+    {'id': 'max_episode_steps', 'name': 'Max Episode Steps', 'default': 5000},
+    {'id': 'scale', 'name': 'Scale', 'help': "Observation scale", 'default': 1 },
+  ]
+
+  var totalQueueNodeCount = 0
+  var totalQueueNodeParameters = [
+    {'id': 'num_cores', 'name': 'Number of Cores', 'default': 54},
+    {'id': 'single_clk', 'name': 'Single Core Clock', 'input_type': 'bandwidth', 'additional_text': 'GB', 'default': 4},
+    {'id': 'movable', 'name': 'Movable', 'selections': movableSelections, 'input_type': 'radio_selection_list', 'help': 'Not movable, Levy walk model, or Vehicle model', 'default': 0},
+  ]
+
+  var appQueueNodeCount = 0
+  var appQueueNodeParameters = [
+    {'id': 'num_cores', 'name': 'Number of Cores', 'default': 10},
+    {'id': 'single_clk', 'name': 'Single Core Clock', 'input_type': 'bandwidth', 'additional_text': 'GB', 'default': 4},
+    {'id': 'applications', 'name': 'Applications', 'selections': applicationsSelections, 'input_type': 'checkbox_selection_list', 'default': new Set([1, 2, 3]), 'help': 'Applications for this node'},
+    {'id': 'is_random_task_generating', 'name': 'Is Random Task Generating', 'input_type': 'switch', 'help': 'If the node is task generating node, True', 'default': true},
+    {'id': 'offload_type', 'name': 'Offload Type', 'selections': offloadTypeSelections, 'input_type': 'radio_selection_list', 'help': 'On/off(False) or partial(True)', 'default': 1},
+    {'id': 'movable', 'name': 'Movable', 'selections': movableSelections, 'input_type': 'radio_selection_list', 'help': 'Not movable, Levy walk model, or Vehicle model', 'default': 0},
+  ]
+
+  var channelCount = 0
+  var channelParameters = [
+    {'id': 'channel_type', 'name': 'Channel Type', 'selections': channelSelections, 'input_type': 'radio_selection_list', 'help': 'If you don’t want to use preset operating frequency and bandwidth, set rate and op_freq', 'default': 5},
+    {'id': 'pathloss', 'name': 'Pathloss', 'help': 'Path loss exponent value (gamma).\nWIRED channel and 0 value doesn’t use path loss model.\ne.g. vacuum 2.0', 'default': 0},
+    {'id': 'lf', 'name': 'Large Scale Fading', 'help': 'Sigma value of exponential distributin in dB in large scale fading (shadow fading)\nWIRED channel doesn’t use this.\nE.g. vacuum 0', 'default': 0},
+    {'id': 'sf_type', 'name': 'Small Scale Fading Type', 'selections': sfTypeSelections, 'input_type': 'radio_selection_list', 'help': 'small scale fading type (multipath fading) : RAYLEIGH, RICE, NAKAGAMI\nWIRED channel and 0 value doesn’t use fading model.', 'default': 0},
+    {'id': 'sf_factor', 'name': 'Small Scale Fading Factor', 'help': 'Small scale fading factor, ignore multipath fading if 0.\nWIRED channel doesn’t use this.', 'default': 0},
+    {'id': 'rate', 'name': 'Rate', 'help': 'If you don’t want to use preset operating frequency and bandwidth, set this field', 'default': 'None'},
+    {'id': 'op_freq', 'name': 'Operating Frequency', 'help': 'If you don’t want to use preset operating frequency and bandwidth, set this field', 'default': 'None'},
+  ]
+
+  var linkCount = 0
+  /* End of Table Fields */
+
+  /* Form ID Prefixes */
+  var env_form = "env_params";
+  var total_node_form = "total_node_params_$";
+  var app_node_form = "app_node_params_$";
+  var channel_form = "channel_params_$";
+  var link_form = "link_params_$";
+  /* End of Form ID Prefixes */
+
+  function InitializeEnvParams()
+  {
+    for (var i = 0; i < environmentParameters.length; i++)
+    {
+      var param = environmentParameters[i];
+      var form_id = env_form;
+      var rowHtml = "<tr>";
+      if (i == 0)
+      {
+        rowHtml += sprintf("<form id='$'></form>", form_id);
+      }
+      rowHtml += GenerateRow(param, form_id);
+      rowHtml += "</tr>";
+
+      $("#input_tbody_env").append(rowHtml);
+    }
+  }
+
+  $("#add_node_total_queue").click(function () {
+    totalQueueNodeCount++;
+
+    var form_id = sprintf(total_node_form, totalQueueNodeCount);
+    var rowHtml = "";
+
+    for (var i = 0; i < totalQueueNodeParameters.length; i++)
+    {
+      var param = totalQueueNodeParameters[i];
+
+      if (i == 0)
+      {
+        rowHtml += sprintf("<tr><form id='$'></form>", form_id);
+        rowHtml += sprintf("<input type='hidden' name='id' value='tq_$' form='$'/>", totalQueueNodeCount, form_id);
+        rowHtml += sprintf('<td rowspan=$>$</td>', totalQueueNodeParameters.length, "Total Node " + totalQueueNodeCount);
+      }
+      else if (i > 0)
+      {
+        rowHtml += "<tr>";
+      }
+
+      rowHtml += GenerateRow(param, form_id, 'total', totalQueueNodeCount);
+      rowHtml += "</tr>";
+    }
+
+    $("#input_tbody_node_total_queue").append(rowHtml);
+
+    ResetTooltips();
+  });
+
+  $("#add_node_app_queue").click(function () {
+    appQueueNodeCount++;
+
+    var form_id = sprintf(app_node_form, appQueueNodeCount);
+    var rowHtml = "";
+
+    for (var i = 0; i < appQueueNodeParameters.length; i++)
+    {
+      var param = appQueueNodeParameters[i];
+
+      if (i == 0)
+      {
+        rowHtml += sprintf("<tr><form id='$'></form>", form_id);
+        rowHtml += sprintf("<input type='hidden' name='id' value='aq_$' form='$'/>", appQueueNodeCount, form_id);
+        rowHtml += sprintf('<td rowspan=$>$</td>', appQueueNodeParameters.length, "App Node " + appQueueNodeCount);
+      }
+      else if (i > 0)
+      {
+        rowHtml += "<tr>";
+      }
+      rowHtml += GenerateRow(param, form_id, 'app', appQueueNodeCount);
+      rowHtml += "</tr>";
+    }
+
+    $("#input_tbody_node_app_queue").append(rowHtml);
+
+    ResetTooltips();
+  });
+
+  $("#add_channel").click(function () {
+    channelCount++;
+
+    var form_id = sprintf(channel_form, channelCount);
+    var rowHtml = "";
+
+    for (var i = 0; i < channelParameters.length; i++)
+    {
+      var param = channelParameters[i];
+
+      if (i == 0)
+      {
+        rowHtml += sprintf("<tr><form id='$'></form>", form_id);
+        rowHtml += sprintf("<input type='hidden' name='id' value='channel_$' form='$'/>", channelCount, form_id);
+        rowHtml += sprintf('<td rowspan=$>$</td>', channelParameters.length, "Channel " + channelCount);
+      }
+      else if (i > 0)
+      {
+        rowHtml += "<tr>";
+      }
+      rowHtml += GenerateRow(param, form_id, 'channel', channelCount);
+      rowHtml += "</tr>";
+    }
+
+    $("#input_tbody_channel").append(rowHtml);
+
+    ResetTooltips();
+  });
+
+  $(document).on('click', '[button_type=select_upper_node_button]', function() {
+    console.log("click")
+    var targetDropdownID = $(this).attr("target_dropdown");
+    $("#" + targetDropdownID).empty();
+    for (var i = 1; i <= totalQueueNodeCount; i++)
+    {
+      var name = "Total Node " + i;
+      $("#" + targetDropdownID).append(sprintf(dropdownElementFormat, name, "tq_" + i, targetDropdownID, name));
+    }
+    for (var i = 1; i <= appQueueNodeCount; i++)
+    {
+      var name = "App Node " + i;
+      $("#" + targetDropdownID).append(sprintf(dropdownElementFormat, name, "aq_" + i, targetDropdownID, name));
+    }
+  })
+
+  $(document).on('click', '[button_type=select_channel_button]', function() {
+    var targetDropdownID = $(this).attr("target_dropdown");
+    $("#" + targetDropdownID).empty();
+    for (var i = 1; i <= channelCount; i++)
+    {
+      var name = "Channel " + i;
+      $("#" + targetDropdownID).append(sprintf(dropdownElementFormat, name, "channel_" + i, targetDropdownID, name));
+    }
+  })
+
+  $(document).on('click', '[button_type=select_lower_node_button]', function() {
+    var targetDropdownID = $(this).attr("target_dropdown");
+    $("#" + targetDropdownID).empty();
+    for (var i = 1; i <= totalQueueNodeCount; i++)
+    {
+      var name = "Total Node " + i;
+      $("#" + targetDropdownID).append(sprintf(dropdownElementFormat, name, "tq_" + i, targetDropdownID, name));
+    }
+    for (var i = 1; i <= appQueueNodeCount; i++)
+    {
+      var name = "App Node " + i;
+      $("#" + targetDropdownID).append(sprintf(dropdownElementFormat, name, "aq_" + i, targetDropdownID, name));
+    }
+  })
+
+  $(document).on('click', '[button_type=dropdown_selector]', function() {
+    var targetDropdownID = $(this).attr("target_dropdown");
+    var targetDropdownButton = $("#" + targetDropdownID + "_button");
+    var targetDropdownHidden = $("#" + targetDropdownID + "_hidden");
+    targetDropdownButton[0].innerHTML = $(this).attr("show");
+    targetDropdownHidden.attr("value", $(this).attr("value"));
+  })
+
+  $("#add_link").click(function() {
+    linkCount++;
+
+    var form_id = sprintf(link_form, linkCount);
+    var rowHtml = "";
+
+    var addLinkTrFirstCellFormat = '<tr><form id="$"></form><td>$</td>';
+
+    rowHtml += sprintf(addLinkTrFirstCellFormat, form_id, "Link " + linkCount);
+    rowHtml += sprintf(addLinkTrUpperNodeCellFormat, linkCount, form_id, linkCount, linkCount, linkCount);
+    rowHtml += sprintf(addLinkTrChannelCellFormat, linkCount, form_id, linkCount, linkCount, linkCount);
+    rowHtml += sprintf(addLinkTrLowerNodeCellFormat, linkCount, form_id, linkCount, linkCount, linkCount);
+    $("#input_tbody_link").append(rowHtml);
+  });
+
+  function GenerateRow(param, form_id="", id_prefix='', count=0)
+  {
+    var id = param['id']
+    var name = param['name']
+    var input_type = TryGetValue(param, 'input_type', 'text');
+    var help = TryGetValue(param, 'help');
+    var def = TryGetValue(param, 'default');
+    var additional_text = TryGetValue(param, 'additional_text');
+    var selections = TryGetValue(param, 'selections', []);
+
+    var rowHtml = "";
+
+    if (input_type == 'text')
+    {
+      rowHtml += sprintf(textInputFormat, help, name, def, id, name, id, form_id);
+    }
+    else if (input_type == 'switch')
+    {
+      rowHtml += sprintf(switchInputFormat, help, name, id, id, form_id, id);
+    }
+    else if (input_type == 'bandwidth')
+    {
+      rowHtml += sprintf(additionalTextInputFormat, help, name, def, id, id, form_id, additional_text);
+    }
+    else if (input_type == 'checkbox_selection_list')
+    {
+      var innerHtml = ""
+      for (var j = 0; j < selections.length; j++)
+      {
+        var s = selections[j];
+        if ('show' in s && s['show'] == false)
+        {
+          continue;
+        }
+        var sid = s['id']
+        var sname = s['name']
+        var checked = def.has(j) ? " checked" : ""
+
+        innerHtml += sprintf(innerSwitchInputFormat, id, sid, sid, form_id, checked, sid, sname)
+      }
+
+      rowHtml += sprintf(tdTemplateFormat, help, name, innerHtml);
+    }
+    else if (input_type == 'radio_selection_list')
+    {
+      var innerRadioHtml = GetRadioHtml(id, id_prefix + '_' + id + "_" + count, selections, form_id, def);
+      var radioHtml = sprintf(radioGroupSelectionFormat, help, name, innerRadioHtml);
+
+      rowHtml += radioHtml;
+    }
+
+    return rowHtml;
+  }
+
+  function TryGetValue(dict, key, def='')
+  {
+    return key in dict ? dict[key] : def;
+  }
+
+  function GetRadioHtml(id, comb_id, selections, form_id="", def_index=0)
+  {
+    var innerRadioHtml = "";
+
+    for (var i = 0; i < selections.length; ++i)
+    {
+      var s = selections[i];
+      if (TryGetValue(s, 'show', true) == false)
+      {
+        continue;
+      }
+
+      var checked = def_index == i ? " checked" : "";
+      var this_selection_id = comb_id + "_" + s['id'];
+
+      innerRadioHtml += sprintf(radioSelectionFormat, form_id, s['id'], id, this_selection_id, checked, this_selection_id,  s['name'])
+    }
+
+    return innerRadioHtml;
+  }
+
+  $("#export_to_json").click(function() {
+    downloadObjectAsJson(ExtractInputs(), "env_" + Date.now())
+  })
+
+  function downloadObjectAsJson(exportObj, exportName)
+  {
+    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 4));
+    var downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", exportName + ".json");
+    document.body.appendChild(downloadAnchorNode); // required for firefox
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  }
+
+  function ParseValue(val)
+  {
+    var num = Number(val);
+    if (isNaN(num))
+    {
+      if (val == "true")
+      {
+        return true;
+      }
+      else if (val == 'false')
+      {
+        return false;
+      }
+      else if (val == 'None')
+      {
+        return null;
+      }
+      return val;
+    }
+
+    return num;
+  }
+
+  function GetDefault(params, id)
+  {
+    for (var index in params)
+    {
+      var param = params[index]
+      if (param['id'] != id)
+      {
+        continue;
+      }
+
+      return param['default']
+    }
+
+    return null;
+  }
+
+  function ExtractInputs()
+  {
+    var dict = {}
+
+    /* Environment Parameters */
+    var envParams = $("#env_params").serializeArray();
+    for (var index in envParams)
+    {
+      var param = envParams[index]
+      var key = param['name'];
+      var value = param['value'];
+
+      if (value === "")
+      {
+        value = GetDefault(environmentParameters, key)
+      }
+
+      value = ParseValue(value)
+      dict[key] = value
+    }
+
+    /* Total Queue Nodes Parameters */
+    var tq_nodes = []
+    for (var i = 1; i <= totalQueueNodeCount; i++)
+    {
+      var tq_node_params = $("#" + sprintf(total_node_form, i)).serializeArray();
+      var tq_node = {}
+
+      for (var index in tq_node_params)
+      {
+        var param = tq_node_params[index];
+
+        var key = param['name'];
+        var value = param['value'];
+
+        if (value === "")
+        {
+          value = GetDefault(totalQueueNodeParameters, key)
+        }
+
+        value = ParseValue(value)
+        tq_node[key] = value
+      }
+      tq_nodes.push(tq_node);
+    }
+    dict['tq_nodes'] = tq_nodes;
+
+    /* App Queue Nodes Parameters */
+    var aq_nodes = []
+    for (var i = 1; i <= appQueueNodeCount; i++)
+    {
+      var aq_node_params = $("#" + sprintf(app_node_form, i)).serializeArray();
+      var aq_node = {}
+      var applications = []
+
+      for (var index in aq_node_params)
+      {
+        var param = aq_node_params[index];
+
+        var key = param['name'];
+        var value = param['value'];
+
+        if (value === "")
+        {
+          value = GetDefault(appQueueNodeParameters, key)
+        }
+
+        value = ParseValue(value)
+        if (key == 'applications')
+        {
+          applications.push(value);
+        }
+        else
+        {
+          aq_node[key] = value
+        }
+      }
+      aq_node['applications'] = applications
+
+      if ("is_random_task_generating" in aq_node)
+      {
+        aq_node["is_random_task_generating"] = true
+      }
+      else
+      {
+        aq_node["is_random_task_generating"] = false
+      }
+
+      aq_nodes.push(aq_node);
+    }
+    dict['aq_nodes'] = aq_nodes;
+
+    /* Channels Parameters */
+    var channels = []
+    for (var i = 1; i <= channelCount; i++)
+    {
+      var channel_params = $("#" + sprintf(channel_form, i)).serializeArray();
+      var channel = {}
+
+      for (var index in channel_params)
+      {
+        var param = channel_params[index];
+
+        var key = param['name'];
+        var value = param['value'];
+
+        if (value === "")
+        {
+          value = GetDefault(channelParameters, key)
+        }
+
+        value = ParseValue(value)
+        channel[key] = value
+      }
+      channels.push(channel);
+    }
+    dict['channels'] = channels;
+
+    /* Links Parameters */
+    var links = []
+    for (var i = 1; i <= linkCount; i++)
+    {
+      var link_params = $("#" + sprintf(link_form, i)).serializeArray();
+      var link = {}
+
+      for (var index in link_params)
+      {
+        var param = link_params[index];
+
+        var key = param['name'];
+        var value = param['value'];
+
+        link[key] = value
+      }
+      links.push(link)
+    }
+    dict['link_infos'] = links;
+
+    return dict;
+  }
+
+  var radioGroupSelectionFormat = '<td><a href="#" class="d-inline-block" data-bs-toggle="tooltip" title="" data-bs-placement="top" data-bs-original-title="$">$</a></td><td><div class="btn-group" role="group" aria-label="Basic radio toggle button group">$</div></td>';
+  var radioSelectionFormat = '<input type="radio" class="btn-check" form="$" value="$" name="$" id="$" autocomplete="off"$><label class="btn btn-outline-primary" for="$">$</label>';
+
+  var textInputFormat = '<td><a href="#" class="d-inline-block" data-bs-toggle="tooltip" title="" data-bs-placement="top" data-bs-original-title="$">$</a></td><td><input type="number" class="form-control" placeholder="$" aria-label="$" aria-describedby="$" name="$" form="$"></td>'
+
+  var additionalTextInputFormat = '<td><a href="#" class="d-inline-block" data-bs-toggle="tooltip" title="" data-bs-placement="top" data-bs-original-title="$">$</a></td><td><div class="input-group">  <input type="number" class="form-control" placeholder="$" aria-label="$" name="$" form="$"><span class="input-group-text">$</span></div></td>'
+
+  var switchInputFormat = '<td><a href="#" class="d-inline-block" data-bs-toggle="tooltip" title="" data-bs-placement="top" data-bs-original-title="$">$</a></td><td><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="$" name="$" form="$"><label class="form-check-label" for="$"></label></div></td>'
+
+  var tdTemplateFormat = '<td><a href="#" class="d-inline-block" data-bs-toggle="tooltip" title="" data-bs-placement="top" data-bs-original-title="$">$</a></td><td>$</td>';
+
+  var innerSwitchInputFormat = '<div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" name="$" value="$" id="$" form="$"$><label class="form-check-label" for="$">$</label></div>'
+
+  var addLinkTrUpperNodeCellFormat = `
+    <td>
+      <div class="btn-group dropup">
+        <input type="hidden" id="link_$_upper_node_dropdown_hidden" name="server_id" form="$">
+        <button type="button" class="btn btn-outline-primary dropdown-toggle" button_type="select_upper_node_button" data-bs-toggle="dropdown" aria-expanded="false" id="link_$_upper_node_dropdown_button" target_dropdown="link_$_upper_node_dropdown">
+          상위 노드
+        </button>
+        <ul class="dropdown-menu" id="link_$_upper_node_dropdown">
+        </ul>
+      </div>
+    </td>`;
+  var addLinkTrChannelCellFormat = `
+    <td>
+      <div class="btn-group dropup">
+        <input type="hidden" id="link_$_channel_dropdown_hidden" name="channel_id" form="$">
+        <button type="button" class="btn btn-outline-primary dropdown-toggle" button_type="select_channel_button" data-bs-toggle="dropdown" aria-expanded="false" id="link_$_channel_dropdown_button" target_dropdown="link_$_channel_dropdown">
+          채널
+        </button>
+        <ul class="dropdown-menu" id="link_$_channel_dropdown">
+        </ul>
+      </div>
+    </td>`;
+  var addLinkTrLowerNodeCellFormat = `
+      <td>
+        <div class="btn-group dropup">
+          <input type="hidden" id="link_$_lower_node_dropdown_hidden" name="client_id" form="$">
+          <button type="button" class="btn btn-outline-primary dropdown-toggle" button_type="select_lower_node_button" data-bs-toggle="dropdown" aria-expanded="false" id="link_$_lower_node_dropdown_button" target_dropdown="link_$_lower_node_dropdown">
+            하위 노드
+          </button>
+          <ul class="dropdown-menu" id="link_$_lower_node_dropdown">
+          </ul>
+        </div>
+      </td>
+    </tr>`;
+
+  var dropdownElementFormat = '<li><a class="dropdown-item" button_type="dropdown_selector" show="$" value="$" target_dropdown="$">$</a></li>'
+
+  InitializeEnvParams();
+  ResetTooltips();
+
+  function ResetTooltips()
+  {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+  }
+})
+
+</script>
