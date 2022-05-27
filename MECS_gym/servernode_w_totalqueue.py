@@ -13,11 +13,9 @@ from scipy.spatial import distance
 # from baselines.task_queue import TaskQueue
 
 from constants import *
-from task import Task
 from task_queue import TaskQueue
 
 logger = logging.getLogger(__name__)
-
 
 # class ServerNode(Node):
 class ServerNode:
@@ -40,22 +38,24 @@ class ServerNode:
         del self.task_queue
         del self
 
-    def move(self, type = 'levy'):
-        if type =='levy':
+    def move(self):
+        if self.movable== LEVY:
             # uniformly distributed angles
             angle = uniform.rvs(loc=.0, scale=2.*np.pi )
             # levy distributed step length
             r = levy.rvs(loc=3, scale=0.5)
             self.location += [r * np.cos(angle), r * np.sin(angle)]
             self.angle = angle
-        else:
+        elif self.movable == VEHICLE:
             # type == vehicle
-            # normally distributed angles from temporal direction
+            # toward a normally distributed angle from temporal direction
             angle = norm.rvs(loc=self.angle, scale=np.pi/12)%(2*np.pi)
             # levy distributed step length
             r = levy.rvs(loc=100, scale=10)
             self.location += [r * np.cos(angle), r * np.sin(angle)]
             self.angle = angle
+        else:
+            pass
 
     def get_dist(self, node):
         return distance.euclidean(self.location, node.location)
@@ -131,3 +131,4 @@ class ServerNode:
         return [self.task_queue.mean_arrival(time, estimate_interval, scale=scale),\
                 self.task_queue.last_arrival(time, scale=scale), self.task_queue.get_cpu_needs(scale=scale),\
                 self.cpu_used/self.computational_capability]
+
