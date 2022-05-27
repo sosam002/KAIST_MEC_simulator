@@ -23,7 +23,6 @@ from buffers import TaskBuffer
 from constants import *
 
 
-
 logger = logging.getLogger(__name__)
 
 class TaskQueue(object):
@@ -149,14 +148,15 @@ class TaskQueue(object):
                         task_size -= to_be_served
                         # offloading
                         if not type:
-                            if offload_type ==1:
+                            if offload_type ==1: # partial
                                 # task_ob data size is adjusted in make_child_task function
                                 new_task = task_ob.make_child_task(to_be_served)
                                 # print("old_task uuid\t", task_id)
                                 # print("new_task uuid\t", new_task.get_uuid())
                                 offloaded_tasks[new_task.get_uuid()] = new_task
-                            else:
+                            else: # not partial, on/off --> cannot offload
                                 task_size += to_be_served
+                                break
                         # computation by itself
                         else:
                             self.tasks[task_id].data_size = task_size
