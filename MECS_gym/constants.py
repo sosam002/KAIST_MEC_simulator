@@ -13,6 +13,10 @@ BT = 3
 NFC = 4
 WIRED = 5
 
+# Mobilities
+LEVY = 1
+VEHICLE = 2
+
 # Fadings
 RAYLEIGH = 1
 RICE = 2
@@ -57,6 +61,11 @@ arrival data size       Mbps
 time slot interval      sec (TBD)
 Edge computation cap.   3.3*10^2~10^4
 '''
+
+import numpy as np
+def softmax_1d(array):
+    array = np.exp(array-np.max(array))
+    return array/array.sum()
 
 def main():
     import numpy as np
