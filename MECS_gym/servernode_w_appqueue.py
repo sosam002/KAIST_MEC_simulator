@@ -53,15 +53,15 @@ class ServerNode:
             del self.queue_list[app_type]
         del self
         
-    def move(self, type = 'levy'):
-        if type =='levy':
+    def move(self):
+        if self.movable == LEVY:
             # uniformly distributed angles
             angle = uniform.rvs(loc=.0, scale=2.*np.pi )
             # levy distributed step length
             r = levy.rvs(loc=3, scale=0.5)
             self.location += [r * np.cos(angle), r * np.sin(angle)]
             self.angle = angle
-        else:
+        elif self.movable == VEHICLE:
             # type == vehicle
             # toward a normally distributed angle from temporal direction
             angle = norm.rvs(loc=self.angle, scale=np.pi/12)%(2*np.pi)
@@ -69,6 +69,8 @@ class ServerNode:
             r = levy.rvs(loc=100, scale=10)
             self.location += [r * np.cos(angle), r * np.sin(angle)]
             self.angle = angle
+        else:
+            pass
 
     def get_dist(self, node):
         return distance.euclidean(self.location, node.location)
